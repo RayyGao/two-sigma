@@ -1,6 +1,6 @@
 #the purpose of this file os to setup a basic framework for parsing the image directory (and subdirectories)
 #and build a dataframe with the listing_id (aka the directory names and picture file 'prefix') to be merged with the main dataframe
-
+import numpy as np
 import os
 import pandas as pd
 from PIL import Image
@@ -32,4 +32,12 @@ for listing in set(os.listdir(imgdir)):
                            R,G,B = pixelRGB
                            brightness = sum([R,G,B])/3
                            print "Brightness is: " + str(brightness) + "\n"
-
+                           #Standard
+                           LuminanceA = (0.2126*R) + (0.7152*G) + (0.0722*B)
+                           print "Luminance A is: " + str(LuminanceA) + "\n"
+                           #Percieved A
+                           LuminanceB = (0.299*R + 0.587*G + 0.114*B)
+                           #Perceived B, slower to calculate
+                           print "Luminance B is: " + str(LuminanceB) + "\n"
+                           LuminanceC =np.sqrt( 0.241*R*R + 0.691*G*G + 0.068*B*B )
+                           print "Luminance C is: " + str(LuminanceC) + "\n"
