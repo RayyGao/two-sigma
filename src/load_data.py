@@ -6,7 +6,7 @@ from preprocess import process_data
 def save_data(filename):
     DATA_PATH = os.path.join(PROJECT_ROOT, 'data', filename)
     PROC_PATH = os.path.join(PROJECT_ROOT, 'data',
-                             "processed_" + os.path.basename(DATA_PATH))
+                             "processed_" + filename)
     try:
         pre = os.path.basename(DATA_PATH)
         post = os.path.basename(PROC_PATH)
@@ -29,8 +29,9 @@ def save_data(filename):
     except:
         print("Failed to process {} to file.".format(DATA_PATH))
 
-def load_data(filename):
-    DATA_PATH = os.path.join(PROJECT_ROOT, 'data', filename)
+def load_processed_data(filename):
+    DATA_PATH = os.path.join(PROJECT_ROOT, 'data',
+                             "processed_" + filename)
     with open(DATA_PATH) as f:
             data = pd.read_json(f)
 
