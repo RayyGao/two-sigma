@@ -20,13 +20,12 @@ distinct_features = ["By Owner",
                      "Common Outdoor Space",
                      "Storage Facility"]
 
-
 def load_data(filename):
     with open(filename) as f:
         data = pd.read_json(f)
 
     dist = data.features.apply(
-        lambda x: pd.Series(map(lambda z: z in x, distinct_features) +
+        lambda x: pd.Series(map(lambda z: 1 if (z in x) else 0, distinct_features) +
                             [list(np.setdiff1d(x, distinct_features))]))
     dist.columns = distinct_features + ["UNIQUES"]
 
