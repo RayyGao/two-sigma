@@ -1,2 +1,3 @@
-
+*.pyc
 /two-sigma.org
+/develop/.ipynb_checkpoints/2017-02-23-YH-EDA-upd-checkpoint.ipynb
