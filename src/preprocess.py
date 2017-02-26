@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import os
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -40,29 +39,19 @@ def add_manager_id_count(data):
 
     return pd.merge(data, man_counts, on="manager_id")
 
-def process_data(prefile, postfile):
-    """
-    Read prefile as json, process it, write the processed data to postfile,
-    and return the processed data.
-    """
-    pre = os.path.basename(prefile)
-    post = os.path.basename(postfile)
-    print("\nOpening '{}'...".format(pre))
-    with open(prefile) as f:
-        data = pd.read_json(f)
+def add_description_analysis(data):
+    pass
 
+def process_data(data):
+    """
+    Read prefile as json, process it, and return the processed data.
+    """
     print("Pre-processing data...")
 
     data = add_dummy_features(data)
     data = add_manager_id_count(data)
+    data = add_description_analysis(data)
 
     print("Finished processing data.")
 
-    print("Writing processed data to '{}'...".format(post))
-    with open(postfile, "w") as p:
-        data.to_json(p)
-
-    print("Finished processing '{}' into '{}'.".format(pre, post))
-
     return data
-
