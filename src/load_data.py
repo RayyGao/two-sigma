@@ -25,19 +25,20 @@ def load_data(filename):
     with open(filename) as f:
         data = pd.read_json(f)
 
+    dist = data.features.apply(
+        lambda x: pd.Series(map(lambda z: z in x, distinct_features) +
+                            [list(np.setdiff1d(x, distinct_features))]))
+    dist.columns = distinct_features + ["UNIQUES"]
+
+    data = data.join(dist)
+
+    man_counts = pd.DataFrame(data.manager_id.value_counts())
+    man_counts["manager count"] = man_counts["manager_id"]
+    man_counts["manager_id"] = man_counts.index
+
+    data = pd.merge(data, man_counts, on="manager_id")
+
     return data
 
-data = load_data("../data/train.json")
 
-dist = data.features.apply(
-    lambda x: pd.Series(map(lambda z: z in x, distinct_features) +
-                        [list(np.setdiff1d(x, distinct_features))]))
-dist.columns = distinct_features + ["UNIQUES"]
-
-data = data.join(dist)
-
-man_counts = pd.DataFrame(data.manager_id.value_counts())
-man_counts["manager count"] = man_counts["manager_id"]
-man_counts["manager_id"] = man_counts.index
-
-data = pd.merge(data, man_counts, on="manager_id")
+train_data = load_data("../data/train.json")
