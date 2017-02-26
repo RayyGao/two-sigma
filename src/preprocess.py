@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import os
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -22,31 +23,46 @@ distinct_features = ["By Owner",
                      "Common Outdoor Space",
                      "Storage Facility"]
 
-def add_dummies(prefile, postfile):
-    print("Opening {}...".format(prefile))
-    with open(prefile) as f:
-        data = pd.read_json(f)
-
-    print("Processing data...")
+def add_dummy_features(data):
+    print ("Adding dummy features...")
     dist = data.features.apply(
         lambda x: pd.Series(map(lambda z: 1 if (z in x) else 0, distinct_features) +
-                            [list(np.setdiff1d(x, distinct_features))]))
-    dist.columns = distinct_features + ["UNIQUES"]
+                            [len(np.setdiff1d(x, distinct_features))]))
+    dist.columns = distinct_features + ["unique_count"]
 
-    data = data.join(dist)
+    return data.join(dist)
 
+def add_manager_id_count(data):
+    print ("Adding manager count...")
     man_counts = pd.DataFrame(data.manager_id.value_counts())
     man_counts["manager count"] = man_counts["manager_id"]
     man_counts["manager_id"] = man_counts.index
 
-    data = pd.merge(data, man_counts, on="manager_id")
+    return pd.merge(data, man_counts, on="manager_id")
 
-    print("Writing data to {}...".format(postfile))
+def process_data(prefile, postfile):
+    """
+    Read prefile as json, process it, write the processed data to postfile,
+    and return the processed data.
+    """
+    pre = os.path.basename(prefile)
+    post = os.path.basename(postfile)
+    print("\nOpening '{}'...".format(pre))
+    with open(prefile) as f:
+        data = pd.read_json(f)
+
+    print("Pre-processing data...")
+
+    data = add_dummy_features(data)
+    data = add_manager_id_count(data)
+
+    print("Finished processing data.")
+
+    print("Writing processed data to '{}'...".format(post))
     with open(postfile, "w") as p:
         data.to_json(p)
 
-    print("Finished processing '{}' into '{}'.".format(prefile, postfile))
+    print("Finished processing '{}' into '{}'.".format(pre, post))
 
-add_dummies("../data/train.json", "../data/processed_train.json")
-
+    return data
 
