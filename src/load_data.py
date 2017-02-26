@@ -8,7 +8,7 @@ distinct_features = ["By Owner",
                      "Reduced Fee",
                      "Short Term Allowed",
                      "Furnished",
-                     "Laundry In Unit"
+                     "Laundry In Unit",
                      "Private Outdoor Space",
                      "Parking Space",
                      "Cats Allowed",
