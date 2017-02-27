@@ -1,5 +1,6 @@
 *.pyc
-/data/*.json
+/data/*test.json
+/data/processed_train.json
 /data/*processed*.json
 /develop/*checkpoint*
 /data/images
