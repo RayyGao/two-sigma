@@ -23,12 +23,23 @@ distinct_features = ["By Owner",
 
 def add_dummy_features(data):
     print ("Adding dummy features...")
-    dist = data.features.apply(
+
+    # dummify dists. Not currently used.
+    feat = data.features.apply(
         lambda x: pd.Series(map(lambda z: 1 if (z in x) else 0, distinct_features) +
                             [len(np.setdiff1d(x, distinct_features))]))
-    dist.columns = distinct_features + ["unique_count"]
+    feat.columns = distinct_features + ["unique_count"]
 
-    return data.join(dist)
+    # data = data.join(dist)
+
+    # Use number of distincts and number of uniques instead
+    dist_sum = feat.drop('unique_count', axis=1).apply(sum, axis=1).rename(
+        "dist_count")
+
+    data = pd.join(data, pd.concat([dist_sum, feat['unique_count']], axis=1),
+                     how="left")
+
+    return data
 
 
 def add_manager_id_count(data):
@@ -41,7 +52,10 @@ def add_manager_id_count(data):
 
 
 def add_description_analysis(data):
-    return data
+    d_words = d.apply(word_tokenize)
+    d_words_count = d_words.apply(len)
+
+    return data.join(d_words_count)
 
 
 def process_data(data):
