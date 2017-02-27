@@ -101,6 +101,13 @@ def add_description_sentiment_analysis(data):
         data.description.apply(lambda x: TextBlob(x).sentiment.polarity).rename(
             "description_sentiment"))
 
+def add_image_data(data):
+    print "Adding image data..."
+
+    images = pd.read_csv("../data/image_stats-fixed.csv", index_col=0)
+
+    return data.merge(images, how='left', on='listing_id')
+
 def process_data(data):
     """
     Read prefile as json, process it, and return the processed data.
@@ -112,6 +119,7 @@ def process_data(data):
     data = add_manager_id_count(data)
     data = add_description_text_analysis(data)
     data = add_description_sentiment_analysis(data)
+    data = add_image_data(data)
 
     print("Finished processing data.\n")
 
