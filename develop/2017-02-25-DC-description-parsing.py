@@ -16,8 +16,8 @@ d_null = d.apply(lambda x: len(x) > 0) # ~3%
 d_words = d.apply(word_tokenize)
 d_words_count = d_words.apply(len)
 
-d_length = d.apply(len)
-d_word_length_ratio = d_words/d_length
+d_length = d.apply(len)                 # probably useless
+d_word_length_ratio = d_words/d_length  # .
 
 
 

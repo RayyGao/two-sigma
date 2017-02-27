@@ -41,7 +41,10 @@ def add_manager_id_count(data):
 
 
 def add_description_analysis(data):
-    return data
+    d_words = d.apply(word_tokenize)
+    d_words_count = d_words.apply(len)
+
+    return data.join(d_words_count)
 
 
 def process_data(data):
