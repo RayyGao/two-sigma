@@ -1,11 +1,14 @@
 """
 Process train/test data. See process_data function at bottom of file.
 """
+import os
 
 import numpy as np
 import pandas as pd
 from nltk.tokenize import word_tokenize
 from textblob import TextBlob
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -104,7 +107,8 @@ def add_description_sentiment_analysis(data):
 def add_image_data(data):
     print "Adding image data..."
 
-    images = pd.read_csv("../data/image_stats-fixed.csv", index_col=0)
+    images = pd.read_csv(os.path.join(PROJECT_ROOT, 'data', 'image_stats-fixed.csv'),
+                         index_col=0)
 
     return data.merge(images, how='left', on='listing_id')
 
