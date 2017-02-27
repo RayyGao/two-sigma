@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from nltk.tokenize import word_tokenize
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -20,23 +21,45 @@ distinct_features = ["By Owner",
                      "Common Outdoor Space",
                      "Storage Facility"]
 
+DUMMY_FEATURES = None
 
-def add_dummy_features(data):
-    print ("Adding dummy features...")
+def _dummy_features(data):
+    global DUMMY_FEATURES
 
-    # dummify dists. Not currently used.
+    # load cached features if present
+    if DUMMY_FEATURES:
+        return DUMMY_FEATURES.copy()
+
     feat = data.features.apply(
         lambda x: pd.Series(map(lambda z: 1 if (z in x) else 0, distinct_features) +
                             [len(np.setdiff1d(x, distinct_features))]))
     feat.columns = distinct_features + ["unique_count"]
 
-    # data = data.join(dist)
+    # cache dummy_features
+    DUMMY_FEATURES = feat.copy()
+
+    return feat
+
+def add_dummy_features(data):
+    print ("Adding dummy features...")
+
+    feat = _dummy_features(data)
+
+    # currently include all features
+    data = data.join(dist)
+
+    return data
+
+def add_feature_counts(data):
+    print "Add apartment feature counts"
+
+    feat = _dummy_features(data)
 
     # Use number of distincts and number of uniques instead
     dist_sum = feat.drop('unique_count', axis=1).apply(sum, axis=1).rename(
         "dist_count")
 
-    data = pd.join(data, pd.concat([dist_sum, feat['unique_count']], axis=1),
+    data = data.join(pd.concat([dist_sum, feat['unique_count']], axis=1),
                      how="left")
 
     return data
@@ -52,8 +75,13 @@ def add_manager_id_count(data):
 
 
 def add_description_analysis(data):
+    print "Adding description analysis..."
+
+    d = data.description
     d_words = d.apply(word_tokenize)
-    d_words_count = d_words.apply(len)
+    d_words_count = pd.Series(d_words.apply(len))
+    d_words_count.reset_index(d.index)
+    d_words_count.rename("word_count", inplace=True)
 
     return data.join(d_words_count)
 
@@ -64,7 +92,8 @@ def process_data(data):
     """
     print("Pre-processing data...")
 
-    data = add_dummy_features(data)
+    # data = add_dummy_features(data)
+    data = add_feature_counts(data)
     data = add_manager_id_count(data)
     data = add_description_analysis(data)
 
