@@ -20,6 +20,7 @@ distinct_features = ["By Owner",
                      "Common Outdoor Space",
                      "Storage Facility"]
 
+
 def add_dummy_features(data):
     print ("Adding dummy features...")
     dist = data.features.apply(
@@ -29,6 +30,7 @@ def add_dummy_features(data):
 
     return data.join(dist)
 
+
 def add_manager_id_count(data):
     print ("Adding manager count...")
     man_counts = pd.DataFrame(data.manager_id.value_counts())
@@ -37,8 +39,10 @@ def add_manager_id_count(data):
 
     return pd.merge(data, man_counts, on="manager_id")
 
+
 def add_description_analysis(data):
     return data
+
 
 def process_data(data):
     """
