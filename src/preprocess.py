@@ -92,7 +92,7 @@ def process_data(data):
     """
     print("Pre-processing data...")
 
-    # data = add_dummy_features(data)
+    data = add_dummy_features(data)
     data = add_feature_counts(data)
     data = add_manager_id_count(data)
     data = add_description_analysis(data)
