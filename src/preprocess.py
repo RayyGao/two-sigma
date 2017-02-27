@@ -1,6 +1,11 @@
+"""
+Process train/test data. See process_data function at bottom of file.
+"""
+
 import numpy as np
 import pandas as pd
 from nltk.tokenize import word_tokenize
+from textblob import TextBlob
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -27,7 +32,7 @@ def _dummy_features(data):
     global DUMMY_FEATURES
 
     # load cached features if present
-    if DUMMY_FEATURES:
+    if DUMMY_FEATURES is not None:
         return DUMMY_FEATURES.copy()
 
     feat = data.features.apply(
@@ -46,7 +51,7 @@ def add_dummy_features(data):
     feat = _dummy_features(data)
 
     # currently include all features
-    data = data.join(dist)
+    data = data.join(feat)
 
     return data
 
@@ -59,8 +64,11 @@ def add_feature_counts(data):
     dist_sum = feat.drop('unique_count', axis=1).apply(sum, axis=1).rename(
         "dist_count")
 
-    data = data.join(pd.concat([dist_sum, feat['unique_count']], axis=1),
-                     how="left")
+    dists = [dist_sum]
+    if 'unique_count' not in data.columns:
+        dists += [feat['unique_count']]
+
+    data = data.join(pd.concat(dists, axis=1), how="right")
 
     return data
 
@@ -74,8 +82,8 @@ def add_manager_id_count(data):
     return pd.merge(data, man_counts, on="manager_id")
 
 
-def add_description_analysis(data):
-    print "Adding description analysis..."
+def add_description_text_analysis(data):
+    print "Adding description text analysis..."
 
     d = data.description
     d_words = d.apply(word_tokenize)
@@ -85,6 +93,13 @@ def add_description_analysis(data):
 
     return data.join(d_words_count)
 
+def add_description_sentiment_analysis(data):
+    print "Adding description sentiment analysis..."
+
+    # currently just use textblob
+    return data.join(
+        data.description.apply(lambda x: TextBlob(x).sentiment.polarity).rename(
+            "description_sentiment"))
 
 def process_data(data):
     """
@@ -95,8 +110,9 @@ def process_data(data):
     data = add_dummy_features(data)
     data = add_feature_counts(data)
     data = add_manager_id_count(data)
-    data = add_description_analysis(data)
+    data = add_description_text_analysis(data)
+    data = add_description_sentiment_analysis(data)
 
-    print("Finished processing data.")
+    print("Finished processing data.\n")
 
     return data
