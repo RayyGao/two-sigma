@@ -1,3 +1,5 @@
+import pandas as pd
+
 from sklearn import svm
 from sklearn import naive_bayes
 from sklearn.model_selection import train_test_split
@@ -9,8 +11,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 
 def print_scores(test_name, train, test):
     print "{0} train score: {1}\n{0} test score: {2}\n".format(test_name,
-                                                             train,
-                                                             test)
+                                                               train,
+                                                               test)
 
 def test(data, test_size=0.2, random_state=42):
     interest = data['interest_level']
@@ -42,7 +44,6 @@ def test(data, test_size=0.2, random_state=42):
                  clf1.score(X_tr, Y_tr),
                  accuracy_score(Y_te, clf1.predict(X_te)))
 
-
     # GradientBoostingClassifier
     clf2 = GradientBoostingClassifier(n_estimators=20,
                                       learning_rate=1.0,
@@ -53,3 +54,13 @@ def test(data, test_size=0.2, random_state=42):
                  clf2.score(X_tr, Y_tr),
                  accuracy_score(Y_te, clf2.predict(X_te)))
 
+
+data = pd.read_json("../data/processed_train.json")
+
+useless = ['description', 'display_address', 'photos', 'street_address', 'manager_id', 'building_id', 'created',
+           'longitude', 'latitude', 'features']
+
+# Run test on broad set
+d = data.drop(useless, axis=1)
+print "Run test on processed data including variables: {}".format(d.columns)
+test(d)
