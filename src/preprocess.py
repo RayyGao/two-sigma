@@ -1,5 +1,3 @@
-#from load_data import load_data
-
 import numpy as np
 import pandas as pd
 
@@ -40,7 +38,7 @@ def add_manager_id_count(data):
     return pd.merge(data, man_counts, on="manager_id")
 
 def add_description_analysis(data):
-    pass
+    return data
 
 def process_data(data):
     """
