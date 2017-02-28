@@ -29,7 +29,7 @@ def XG(x_train,y_train,x_test,y_test):
 	param['nthread'] = 4
 	param['num_class'] = 3
 	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-	num_round = 5
+	num_round = 10
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 	return bst.predict(xg_test)
@@ -107,17 +107,17 @@ def main_function():
 	train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	ans=[['Features','Train on meta','Test on meta','Train with all','Test with all']]
-	y_train_copy=y_train.copy()
-	y_test_copy=y_test.copy()
 	y_train=train.loc[:,'interest_level']
 	x_train=train.drop('interest_level',axis=1)
 	y_test=test.loc[:,'interest_level']
 	x_test=test.drop('interest_level',axis=1)
+	y_train_copy=y_train.copy()
+	y_test_copy=y_test.copy()
 	diction={'low':0,'medium':1,'high':2}
 	y_train1=map(lambda x: diction[x],y_train)
 	y_test1=map(lambda x: diction[x],y_test)
-    y_train=pd.Series(y_train1,index=y_train.index)
-    y_test=pd.Series(y_test1,index=y_test.index)
+	y_train=pd.Series(y_train1,index=y_train.index)
+	y_test=pd.Series(y_test1,index=y_test.index)
 	res=stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy)
 	print "This model is for all features"
 	print "train accuracy on meta data is ",res[0]
