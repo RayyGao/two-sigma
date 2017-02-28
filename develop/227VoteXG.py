@@ -38,11 +38,10 @@ def main_function():
 
 		res=voting(x_train,y_train,x_test,y_test)
 		print "This model is for top ", i, " features"
-		print "train accuracy is ",res[0]
-		print "test accuracy is ", res[1]
-		ans.append([i,res[0],res[1]])
-	df = pd.DataFrame(ans[1:],columns=ans[0]).set_index('Features')
-	df.to_csv("voting.csv")
+		
+		#ans.append([i,res[0],res[1]])
+	#df = pd.DataFrame(ans[1:],columns=ans[0]).set_index('Features')
+	#df.to_csv("voting.csv")
 
 	
 
@@ -55,9 +54,11 @@ def voting(x_train,y_train,x_test,y_test):
 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],}
 	grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
 	grid.fit(x_train, y_train)
-	trainacc=sum(grid.predict(x_train)==y_train)*1.0/y_train.shape[0]
-	testacc=sum(grid.predict(x_test)==y_test)*1.0/y_test.shape[0]
-	res=[trainacc,testacc]
-	return [trainacc,testacc]
+	trainacc=sklearn.metrics.classification_report( y_train, grid.predict(x_train))
+	testacc=sklearn.metrics.classification_report( y_test, grid.predict(x_test))
+	print testacc
+	
+
+	return testacc
 
 main_function()
