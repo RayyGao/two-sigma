@@ -11,6 +11,7 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score
 ##loading and processing data
 ##logistic regression, random forest classifier, gaussianNB
 def main_function():
@@ -30,37 +31,37 @@ def main_function():
 	train=train_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	ans=[['Features','Train','Test']]
-	for i in range(5,len(importance)+1):
-		y_train=train.loc[:,'interest_level']
-		x_train=train.drop('interest_level',axis=1).loc[:,importance[0:i]]
-		y_test=test.loc[:,'interest_level']
-		x_test=test.drop('interest_level',axis=1).loc[:,importance[0:i]]
-		
+	
+	y_train=train.loc[:,'interest_level']
+	x_train=train.drop('interest_level',axis=1).loc[:,importance[0:16]]
+	y_test=test.loc[:,'interest_level']
+	x_test=test.drop('interest_level',axis=1).loc[:,importance[0:16]]
+	
+	print "-"*150+"\ndata created"
 
-		res=voting(x_train,y_train,x_test,y_test)
-		print "This model is for top ", i, " features"
-		print "train accuracy is ",res[0]
-		print "test accuracy is ", res[1]
-		ans.append([i,res[0],res[1]])
-	df = pd.DataFrame(ans[1:],columns=ans[0]).set_index('Features')
-	df.to_csv("voting.csv")
+	res=addnew(x_train,y_train)
+	print res
 
 	
 
-def voting(x_train,y_train,x_test,y_test):
-	clf1 = LogisticRegression(random_state=1)
-	clf2 = RandomForestClassifier(random_state=1)
-	clf3 = GaussianNB()
-	clf4 = DecisionTreeClassifier(max_depth=4)
-	clf5 = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=4)
-	eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3),('dt',clf4),('gb',clf5)], voting='soft')
-	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],}
-	grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
-	grid.fit(x_train, y_train)
-	trainacc=sum(grid.predict(x_train)==y_train)*1.0/y_train.shape[0]
-	testacc=sum(grid.predict(x_test)==y_test)*1.0/y_test.shape[0]
-	res=[trainacc,testacc]
+def addnew(x_train,y_train):
+	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=100),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=4)]
+	score=[]
+	print "-"*50+"\nmodel created"
+	for i in range(5):
+		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4])]
+		estimator.append(('new',clf[i]))
+		print "-"*150+"\nestimator created"
+		# if i==0:
+		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__C': [1, 100]}
+		# elif i==1:
+		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__n_estimators': [20, 200]}
+		print "-"*150+"\nparams created"
+		eclf = VotingClassifier(estimators=estimator, voting='soft')
+		score.append(np.mean(cross_val_score(eclf, x_train, y_train,n_jobs=2)))
+		print "-"*150+"\nscore created"
+		print "Score for model ", i, "is ", score[-1]
 
-	return [trainacc,testacc]
+	return score
 
 main_function()
