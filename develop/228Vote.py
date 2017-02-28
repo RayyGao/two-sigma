@@ -50,7 +50,7 @@ def addnew(x_train,y_train):
 	score=[]
 	print "-"*50+"\nmodel created"
 	for i in range(6):
-		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4])]
+		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4])]
 		estimator.append(('new',clf[i]))
 		print "-"*150+"\nestimator created"
 		# if i==0:

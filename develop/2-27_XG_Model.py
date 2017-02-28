@@ -10,6 +10,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 import xgboost as xgb
 from sklearn import model_selection
+from sklearn.ensemble import RandomForestClassifier
 
 def GB(x_train,y_train,x_test):
 	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4)
@@ -19,6 +20,7 @@ def GB(x_train,y_train,x_test):
 def XG(x_train,y_train,x_test,y_test):
 	xg_train=xgb.DMatrix(x_train,label=y_train)
 	xg_test=xgb.DMatrix(x_test,label=y_test)
+	param={}
 	param['objective'] = 'multi:softmax'
 # scale weight of positive examples
 	param['eta'] = 0.1
@@ -74,18 +76,18 @@ def stackmodel(x_train,y_train,x_test,y_test,test):
 	test_meta_dummy=pd.get_dummies(test_meta)
 
 	#random forest with meta only
-	lr=LogisticRegression()
-	lr.fit(train_meta_dummy,y_train)
-	trainacc1=accuracy_score(lr.predict(train_meta_dummy),y_train)
-	testacc1= accuracy_score(lr.predict(test_meta_dummy),y_test)
+	clf=RandomForestClassifier(n_estimators=10)
+	clf.fit(train_meta_dummy,y_train)
+	trainacc1=accuracy_score(clf.predict(train_meta_dummy),y_train)
+	testacc1= accuracy_score(clf.predict(test_meta_dummy),y_test)
 
 	x_last_train=pd.concat([train_meta_dummy,x_train],axis=1)
 	x_last_test=pd.concat([test_meta_dummy,x_test],axis=1)
 
 	#random forest with combined
-	lr.fit(x_last_train,y_train)
-	trainacc2=accuracy_score(lr.predict(x_last_train),y_train)
-	testacc2= accuracy_score(lr.predict(x_last_test),y_test)
+	clf.fit(x_last_train,y_train)
+	trainacc2=accuracy_score(clf.predict(x_last_train),y_train)
+	testacc2= accuracy_score(clf.predict(x_last_test),y_test)
 
 	out=[trainacc1,testacc1,trainacc2,testacc2]
 	return out
@@ -116,7 +118,7 @@ def main_function():
     y_train=pd.Series(y_train1,index=y_train.index)
     y_test=pd.Series(y_test1,index=y_test.index)
 	res=stackmodel(x_train,y_train,x_test,y_test,test)
-	print "This model is for top ", i, " features"
+	print "This model is for all features"
 	print "train accuracy on meta data is ",res[0]
 	print "test accuracy on meta data is ", res[1]
 	print "train accuracy on combined data is ",res[2]
