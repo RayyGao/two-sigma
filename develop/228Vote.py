@@ -12,6 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import AdaBoostClassifier
 ##loading and processing data
 ##logistic regression, random forest classifier, gaussianNB
 def main_function():
@@ -33,9 +34,9 @@ def main_function():
 	ans=[['Features','Train','Test']]
 	
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1).loc[:,importance[0:16]]
+	x_train=train.drop('interest_level',axis=1)
 	y_test=test.loc[:,'interest_level']
-	x_test=test.drop('interest_level',axis=1).loc[:,importance[0:16]]
+	x_test=test.drop('interest_level',axis=1)
 	
 	print "-"*150+"\ndata created"
 
@@ -45,11 +46,11 @@ def main_function():
 	
 
 def addnew(x_train,y_train):
-	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=100),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=4)]
+	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=100)]
 	score=[]
 	print "-"*50+"\nmodel created"
-	for i in range(5):
-		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4])]
+	for i in range(6):
+		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1])]
 		estimator.append(('new',clf[i]))
 		print "-"*150+"\nestimator created"
 		# if i==0:

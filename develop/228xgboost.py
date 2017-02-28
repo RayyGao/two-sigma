@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import random
-import xgboost as xgb
-from sklearn import model_selection
-from sklearn.metrics import accuracy_score
+
 def main_function():
 	importance=['price','avg_imagesize_x','word_count','avg_luminance_x','avg_brightness_x','manager count','description_sentiment','img_quantity_x','unique_count','bedrooms','bathrooms','No Fee',\
 	'dist_count','Doorman','Laundry In Building','Elevator','Fitness Center','Reduced Fee','Exclusive','Cats Allowed','Dogs Allowed','Furnished',\

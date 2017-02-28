@@ -5,58 +5,32 @@ import random
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn import model_selection
-from sklearn.ensemble import BaggingClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import svm
-from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import AdaBoostClassifier
-	#base model 1: multinomial logistic regression
-	#base model 2: bagged decision trees
-	#base model 3: Random Forest trees
-	#base model 4: SVM(deleted)
-	#base model 5: bayes classifier
-	#base model 6: Ada Boosting
-#base model 1: multinomial logistic regression
-def mlog(x_train,y_train,x_test):
-	lr = LogisticRegression().fit(x_train, y_train)
-	return lr.predict(x_test)
-#base model 2: bagged decision trees
-def bagDT(x_train,y_train,x_test,y_test):
-	kfold = model_selection.KFold(n_splits=10)
-	cart = DecisionTreeClassifier()
-	num_trees = 100
-	model = BaggingClassifier(base_estimator=cart, n_estimators=num_trees)
-	model.fit(x_train,y_train)
-	predict = model_selection.cross_val_predict(model, x_test, y_test, cv=kfold)
-	return predict
- #base model 3: Random Forest trees
-	
-def rfClassifier(x_train,y_train,x_test,y_test):
-	num_trees = 100
-	max_features = 3
-	kfold = model_selection.KFold(n_splits=10)
-	model = RandomForestClassifier(n_estimators=num_trees, max_features=max_features)
-	model.fit(x_train,y_train)
-	predicted = model_selection.cross_val_predict(model, x_test, y_test, cv=kfold)
-	return predicted
-#base model 4: SVM	
-# def svmm(x_train,y_train,x_test):
-# 	clf = svm.SVC(decision_function_shape='ovr')
-# 	clf.fit(x_train, y_train) 
-# 	return clf.predict(x_test)
-#base model 5: Naive Bayes Classifier
-def gnb(x_train,y_train,x_test):
-	gnb=GaussianNB()
-	y_pred = gnb.fit(x_train, y_train).predict(x_test)
-	return y_pred
+from sklearn.ensemble import GradientBoostingClassifier
+import xgboost as xgb
+from sklearn import model_selection
 
-#base model 6: Ada boosting classifier
-def adaBC(x_train,y_train,x_test):
-	clf = AdaBoostClassifier(n_estimators=100)
-	clf.fit(x_train,y_train)
-	return clf.predict(x_test)
+def GB(x_train,y_train,x_test,y_test):
+	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4)
+	GB.fit(x_train,y_train)
+	return GB.predict(x_test)
+
+def XG(x_train,y_train,x_test,y_test):
+	xg_train=xgb.DMatrix(x_train,label=y_train)
+	xg_test=xgb.DMatrix(x_test,label=y_test)
+	param['objective'] = 'multi:softmax'
+# scale weight of positive examples
+	param['eta'] = 0.1
+	param['max_depth'] = 6
+	param['silent'] = 1
+	param['nthread'] = 4
+	param['num_class'] = 3
+	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
+	num_round = 5
+	print "all initial completed"
+	bst = xgb.train(param, xg_train, num_round, watchlist )
+	return bst.predict(xg_test)
 
 def stackmodel(x_train,y_train,x_test,y_test,test):
 	#1st: partition the train set into 5 test sets
@@ -79,34 +53,24 @@ def stackmodel(x_train,y_train,x_test,y_test,test):
 	    x_sub_train=x_train.drop(x_sub_test.index)
 	    y_sub_test=y_train[x_sub_test.index]
 	    y_sub_train=y_train[x_sub_train.index]
-	    M1=pd.Series(mlog(x_sub_train,y_sub_train,x_sub_test),index=x_sub_test.index)
-	    M2=pd.Series(bagDT(x_sub_train,y_sub_train,x_sub_test,y_sub_test),index=x_sub_test.index)
-	    M3=pd.Series(rfClassifier(x_sub_train,y_sub_train,x_sub_test,y_sub_test),index=x_sub_test.index)
-	    # M4=pd.Series(svmm(x_sub_train,y_sub_train,x_sub_test),index=x_sub_test.index)
-	    M5=pd.Series(gnb(x_sub_train,y_sub_train,x_sub_test),index=x_sub_test.index)
-	    M6=pd.Series(adaBC(x_sub_train,y_sub_train,x_sub_test),index=x_sub_test.index)
-	    app={'M1':M1,'M2':M2,'M3':M3,'M5':M5,'M6':M6}
+	    M1=pd.Series(GB(x_sub_train,y_sub_train,x_sub_test),index=x_sub_test.index)
+	    M2=pd.Series(XG(x_sub_train,y_sub_train,x_sub_test,y_sub_test),index=x_sub_test.index)
+	    app={'M1':M1,'M2':M2}
 	    train_meta=train_meta.append(pd.DataFrame(app))
 	#4th:Fit each base model to the full training dataset 
 	#and make predictions on the test dataset. Store these predictions inside test_meta
-	M1=pd.Series(mlog(x_train,y_train,x_test),index=x_test.index)
-	M2=pd.Series(bagDT(x_train,y_train,x_test,y_test),index=x_test.index)
-	M3=pd.Series(rfClassifier(x_train,y_train,x_test,y_test),index=x_test.index)
-	# M4=pd.Series(svmm(x_train,y_train,x_test),index=x_test.index)
-	M5=pd.Series(gnb(x_train,y_train,x_test),index=x_test.index)
-	M6=pd.Series(adaBC(x_train,y_train,x_test),index=x_test.index)
+	M1=pd.Series(GB(x_train,y_train,x_test),index=x_test.index)
+	M2=pd.Series(XG(x_train,y_train,x_test,y_test),index=x_test.index)
+	
 	test['M1']=M1
 	test['M2']=M2
-	test['M3']=M3
-	# test['M4']=M4
-	test['M5']=M5
-	test['M6']=M6
+	
 
 	#5th: Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
 	#Optionally, include other features from the original training dataset or engineered features
 	##==> transfer to dummy variables
 	train_meta_dummy=pd.get_dummies(train_meta)
-	test_meta=test.loc[:,['M1','M2','M3','M5','M6']]
+	test_meta=test.loc[:,['M1','M2']]
 	test_meta_dummy=pd.get_dummies(test_meta)
 
 	#random forest with meta only
@@ -140,22 +104,19 @@ def main_function():
 	train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	ans=[['Features','Train on meta','Test on meta','Train with all','Test with all']]
-	for i in range(t,train.shape[1]+1):
-		y_train=train.loc[:,'interest_level']
-		x_train=train.drop('interest_level',axis=1).loc[:,importance[0:i]]
-		y_test=test.loc[:,'interest_level']
-		x_test=test.drop('interest_level',axis=1).loc[:,importance[0:i]]
+	
+	y_train=train.loc[:,'interest_level']
+	x_train=train.drop('interest_level',axis=1)
+	y_test=test.loc[:,'interest_level']
+	x_test=test.drop('interest_level',axis=1)
 		
 
-		res=stackmodel(x_train,y_train,x_test,y_test,test)
-		print "This model is for top ", i, " features"
-		print "train accuracy on meta data is ",res[0]
-		print "test accuracy on meta data is ", res[1]
-		print "train accuracy on combined data is ",res[2]
-		print "test accuracy on combined data is ", res[3]
-		ans.append([i,res[0],res[1],res[2],res[3]])
-	df = pd.DataFrame(ans[1:],columns=ans[0]).set_index('Features')
-	df.to_csv("stackingmodel.csv")
+	res=stackmodel(x_train,y_train,x_test,y_test,test)
+	print "This model is for top ", i, " features"
+	print "train accuracy on meta data is ",res[0]
+	print "test accuracy on meta data is ", res[1]
+	print "train accuracy on combined data is ",res[2]
+	print "test accuracy on combined data is ", res[3]
 	
 #return and print 
 main_function()
