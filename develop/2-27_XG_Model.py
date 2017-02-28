@@ -11,7 +11,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 import xgboost as xgb
 from sklearn import model_selection
 
-def GB(x_train,y_train,x_test,y_test):
+def GB(x_train,y_train,x_test):
 	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4)
 	GB.fit(x_train,y_train)
 	return GB.predict(x_test)
@@ -28,7 +28,7 @@ def XG(x_train,y_train,x_test,y_test):
 	param['num_class'] = 3
 	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
 	num_round = 5
-	print "all initial completed"
+	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 	return bst.predict(xg_test)
 
@@ -74,17 +74,18 @@ def stackmodel(x_train,y_train,x_test,y_test,test):
 	test_meta_dummy=pd.get_dummies(test_meta)
 
 	#random forest with meta only
-	res=rfClassifier(train_meta_dummy,y_train,test_meta_dummy,y_test)
-	trainacc1=accuracy_score(rfClassifier(train_meta_dummy,y_train,train_meta_dummy,y_train),y_train)
-	testacc1= accuracy_score(res,y_test)
+	lr=LogisticRegression()
+	lr.fit(train_meta_dummy,y_train)
+	trainacc1=accuracy_score(lr.predict(train_meta_dummy),y_train)
+	testacc1= accuracy_score(lr.predict(test_meta_dummy),y_test)
 
 	x_last_train=pd.concat([train_meta_dummy,x_train],axis=1)
 	x_last_test=pd.concat([test_meta_dummy,x_test],axis=1)
 
 	#random forest with combined
-	res=rfClassifier(x_last_train,y_train,x_last_test,y_test)
-	trainacc2=accuracy_score(rfClassifier(x_last_train,y_train,x_last_train,y_train),y_train)
-	testacc2= accuracy_score(res,y_test)
+	lr.fit(x_last_train,y_train)
+	trainacc2=accuracy_score(lr.predict(x_last_train),y_train)
+	testacc2= accuracy_score(lr.predict(x_last_test),y_test)
 
 	out=[trainacc1,testacc1,trainacc2,testacc2]
 	return out
@@ -99,7 +100,7 @@ def main_function():
 	img=pd.read_csv("../data/image_stats-fixed.csv",index_col=0)
 	processed_data=processed_data.merge(img,how="left",on="listing_id")
 	processed_data=processed_data.fillna(0)
-	train_data=processed_data.sample(n=processed_data.shape[0]*8/10)
+	train_data=processed_data.sample(n=processed_data.shape[0]*7/10)
 	test_data=processed_data.drop(train_data.index)
 	train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
@@ -109,8 +110,11 @@ def main_function():
 	x_train=train.drop('interest_level',axis=1)
 	y_test=test.loc[:,'interest_level']
 	x_test=test.drop('interest_level',axis=1)
-		
-
+	diction={'low':0,'medium':1,'high':2}
+	y_train1=map(lambda x: diction[x],y_train)
+	y_test1=map(lambda x: diction[x],y_test)
+    y_train=pd.Series(y_train1,index=y_train.index)
+    y_test=pd.Series(y_test1,index=y_test.index)
 	res=stackmodel(x_train,y_train,x_test,y_test,test)
 	print "This model is for top ", i, " features"
 	print "train accuracy on meta data is ",res[0]
