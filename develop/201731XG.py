@@ -64,8 +64,9 @@ def stackmodel(x_train,y_train,x_test,y_test):
 	x_train_cpy=x_train.copy()
 	k=x_train.shape[0]/5
 	x_sp=[[],[],[],[],[]]
-	sample=random.sample(x_train.index,k)
+	
 	for i in range(4):
+		sample=random.sample(x_train.index,k)
 		x_sp[i]=x_train.ix[sample]
 		x_train=x_train.drop(sample)
 	x_sp[4]=x_train
@@ -77,21 +78,21 @@ def stackmodel(x_train,y_train,x_test,y_test):
 	
 	for i in range(5):
 		print 'this is the ',i,'th round of stacking'
-	    x_sub_test=x_sp[i]
-	    x_sub_train=x_train.drop(x_sub_test.index)
-	    y_sub_test=y_train[x_sub_test.index]
-	    y_sub_train=y_train[x_sub_train.index]
-	    M1=pd.DataFrame(GB(x_sub_train,y_sub_train,x_sub_test),columns=['GB_low','GB_medium','GB_high'],index=x_sub_test.index)
-	    print "Gradient Boosting"
-	    M2=pd.DataFrame(lr(x_sub_train,y_sub_train,x_sub_test),columns=['lr_low','lr_medium','lr_high'],index=x_sub_test.index)
-	    print "Logistic"
-	    M3=pd.DataFrame(KNN(x_sub_train,y_sub_train,x_sub_test),columns=['knn_low','knn_medium','knn_high'],index=x_sub_test.index)
-	    print "KNN"
-	    M4=pd.DataFrame(rf(x_sub_train,y_sub_train,x_sub_test),columns=['rf_low','rf_medium','rf_high'],index=x_sub_test.index)
-	    print "Random Forest"
-	    M5=pd.DataFrame(ada(x_sub_train,y_sub_train,x_sub_test),columns=['ada_low','ada_medium','ada_high'],index=x_sub_test.index)
-	    print "Adaboost"
-	    train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
+		x_sub_test=x_sp[i]
+		x_sub_train=x_train.drop(x_sub_test.index)
+		y_sub_test=y_train[x_sub_test.index]
+		y_sub_train=y_train[x_sub_train.index]
+		M1=pd.DataFrame(GB(x_sub_train,y_sub_train,x_sub_test),columns=['GB_low','GB_medium','GB_high'],index=x_sub_test.index)
+		print "Gradient Boosting"
+		M2=pd.DataFrame(lr(x_sub_train,y_sub_train,x_sub_test),columns=['lr_low','lr_medium','lr_high'],index=x_sub_test.index)
+		print "Logistic"
+		M3=pd.DataFrame(KNN(x_sub_train,y_sub_train,x_sub_test),columns=['knn_low','knn_medium','knn_high'],index=x_sub_test.index)
+		print "KNN"
+		M4=pd.DataFrame(rf(x_sub_train,y_sub_train,x_sub_test),columns=['rf_low','rf_medium','rf_high'],index=x_sub_test.index)
+		print "Random Forest"
+		M5=pd.DataFrame(ada(x_sub_train,y_sub_train,x_sub_test),columns=['ada_low','ada_medium','ada_high'],index=x_sub_test.index)
+		print "Adaboost"
+	train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
 	   
 	#4th:Fit each base model to the full training dataset 
 	#and make predictions on the test dataset. Store these predictions inside test_meta
@@ -114,7 +115,7 @@ def stackmodel(x_train,y_train,x_test,y_test):
 	#Optionally, include other features from the original training dataset or engineered features
 	##==> transfer to dummy variables
 	
-    pred=XG(train_meta,y_train,test_meta,y_test)
+	pred=XG(train_meta,y_train,test_meta,y_test)
 	#random forest with meta only
 	print "accuracy of train is ", accuracy_score(pred[0],y_train)
 	print "accuracy of test is ", accuracy_score(pred[1],y_test)
