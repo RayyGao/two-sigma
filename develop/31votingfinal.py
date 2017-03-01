@@ -42,8 +42,10 @@ def main_function():
 	print "-"*150+"\ndata created"
 
 	res=addnew(x_train,y_train,x_test)
-	res=pd.Series(res,index=x_test.index)
-	res.to_csv("voteResult.csv")
+	ans=pd.concat([processed_test,res])
+	ans=ans.loc[:,['listing_id','low','medium','high']]
+	
+	ans.to_csv("voteResult.csv")
 
 	
 
@@ -55,7 +57,7 @@ def addnew(x_train,y_train,x_test):
 	print "-"*150+"\nparams created"
 	eclf = VotingClassifier(estimators=estimator, voting='soft')
 	eclf.fit(x_train,y_train)
-	pred=eclf.predict(x_test)
+	pred=eclf.predict_proba(x_test)
 	print "-"*150+"\nscore created"
 	print "Score for model is "
 

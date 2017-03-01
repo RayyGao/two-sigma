@@ -52,7 +52,7 @@ def XG(x_train,y_train,x_test):
 	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
-	res= {'train':bst.predict(xg_train),'test':bst.predict(xg_test)}
+	res= {'train':bst.predict(xg_train),'test':bst.predict_proba(xg_test)}
 	return res
 
 
@@ -117,7 +117,7 @@ def stackmodel(x_train,y_train,x_test):
 	pred=XG(train_meta,y_train,test_meta)
 	#random forest with meta only
 	print "accuracy of train is ", accuracy_score(pred['train'],y_train)
-	return pred['test']
+	return pd.DataFrame(pred['test'],columns=['low','medium','high'],index=x_test.index)
 	
 
 
@@ -145,8 +145,9 @@ def main_function():
 	y_train1=map(lambda x: diction[x],y_train)
 	y_train=pd.Series(y_train1,index=y_train.index)
 	pred=stackmodel(x_train,y_train,x_test)
-	pred=pd.Series(pred,index=x_test.index)
-	pred.to_csv("testResult.csv")
+	ans=pd.concat([processed_test,pred])
+	ans=ans.loc[:,['listing_id','low','medium','high']]
+	ans.to_csv("testResult.csv")
 #return and print 
 main_function()
 
