@@ -144,6 +144,7 @@ def main_function():
 	y_train1=map(lambda x: diction[x],y_train)
 	y_train=pd.Series(y_train1,index=y_train.index)
 	res=stackmodel(x_train,y_train,x_test)
+	res=pd.Series(res,index=x_test.index)
 	res.to_csv("testResult.csv")
 #return and print 
 main_function()
