@@ -1,6 +1,3 @@
-import numpy as np
-import pandas as pd
-from scipy import stats
 import random
 import xgboost as xgb
 import numpy as np
@@ -21,7 +18,7 @@ def GB(x_train,y_train,x_test):
 	return GB.predict_proba(x_test)
 
 def KNN(x_train,y_train,x_test):
-	KNN=KNeighborsClassifier(n_estimators=5,n_jobs=12)
+	KNN=KNeighborsClassifier(n_neighbors=5,n_jobs=12)
 	KNN.fit(x_train,y_train)
 	return KNN.predict_proba(x_test)
 
@@ -49,7 +46,7 @@ def XG(x_train,y_train,x_test):
 	param['eta'] = 0.1
 	param['max_depth'] = 6
 	param['silent'] = 1
-	param['nthread'] = 4
+	param['nthread'] = 12
 	param['num_class'] = 3
 	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
 	num_round = 20
@@ -93,7 +90,7 @@ def stackmodel(x_train,y_train,x_test):
 		print "Random Forest"
 		M5=pd.DataFrame(ada(x_sub_train,y_sub_train,x_sub_test),columns=['ada_low','ada_medium','ada_high'],index=x_sub_test.index)
 		print "Adaboost"
-	train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
+		train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
 	   
 	#4th:Fit each base model to the full training dataset 
 	#and make predictions on the test dataset. Store these predictions inside test_meta
