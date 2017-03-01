@@ -75,7 +75,7 @@ def stackmodel(x_train,y_train,x_test,y_test):
 	train_meta=pd.DataFrame()
 	#3rd: for each fold in 1st, use other 5 folds as training set to predict the result for that fold.
 	#and save them in train_meta
-	
+	x_train=x_train_cpy
 	for i in range(5):
 		print 'this is the ',i,'th round of stacking'
 		x_sub_test=x_sp[i]
