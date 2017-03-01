@@ -93,7 +93,7 @@ def stackmodel(x_train,y_train,x_test,y_test):
 		print "Random Forest"
 		M5=pd.DataFrame(ada(x_sub_train,y_sub_train,x_sub_test),columns=['ada_low','ada_medium','ada_high'],index=x_sub_test.index)
 		print "Adaboost"
-	train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
+		train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
 	print "train_meta size is" ,train_meta.shape[0]
 
 	#4th:Fit each base model to the full training dataset 
@@ -141,7 +141,6 @@ def main_function():
 	test_data=processed_data.drop(train_data.index)
 	train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
-	ans=[['Features','Train on meta','Test on meta','Train with all','Test with all']]
 	y_train=train.loc[:,'interest_level']
 	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
 	y_test=test.loc[:,'interest_level']
