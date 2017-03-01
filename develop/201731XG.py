@@ -55,7 +55,8 @@ def XG(x_train,y_train,x_test,y_test):
 	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
-	return [bst.predict(xg_train),bst.predict(xg_test)]
+	res= {'train':bst.predict(xg_train),'test':bst.predict(xg_test)}
+	return res
 
 
 
@@ -117,8 +118,12 @@ def stackmodel(x_train,y_train,x_test,y_test):
 	
 	pred=XG(train_meta,y_train,test_meta,y_test)
 	#random forest with meta only
-	print "accuracy of train is ", accuracy_score(pred[0],y_train)
-	print "accuracy of test is ", accuracy_score(pred[1],y_test)
+	print len(pred['train'])
+	print y_train.shape[0]
+	print len(pred['test'])
+	print y_test.shape[0]
+	print "accuracy of train is ", accuracy_score(pred['train'],y_train)
+	print "accuracy of test is ", accuracy_score(pred['test'],y_test)
 
 	
 
