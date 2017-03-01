@@ -39,7 +39,7 @@ def ada(x_train,y_train,x_test):
 
 def XG(x_train,y_train,x_test):
 	xg_train=xgb.DMatrix(x_train,label=y_train)
-	xg_test=x_test
+	xg_test=xgb.DMatrix(x_test)
 	param={}
 	param['objective'] = 'multi:softmax'
 # scale weight of positive examples
