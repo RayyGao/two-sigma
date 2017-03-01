@@ -115,12 +115,8 @@ def stackmodel(x_train,y_train,x_test):
 	
 	pred=XG(train_meta,y_train,test_meta)
 	#random forest with meta only
-	print len(pred['train'])
-	print y_train.shape[0]
-	print len(pred['test'])
-	print y_test.shape[0]
 	print "accuracy of train is ", accuracy_score(pred['train'],y_train)
-    return pred['test']
+	return pred['test']
 	
 
 
@@ -142,12 +138,12 @@ def main_function():
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	y_train=train.loc[:,'interest_level']
 	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
-	x_test=test.drop('interest_level',axis=1).loc[:,importance[:16]]
+	x_test=test.loc[:,importance[:16]]
 	y_train_copy=y_train.copy()
 	diction={'low':0,'medium':1,'high':2}
 	y_train1=map(lambda x: diction[x],y_train)
 	y_train=pd.Series(y_train1,index=y_train.index)
-	res=stackmodel(x_train,y_train,x_test,y_test)
+	res=stackmodel(x_train,y_train,x_test)
 	res.to_csv("testResult.csv")
 #return and print 
 main_function()
