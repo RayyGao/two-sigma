@@ -21,49 +21,47 @@ def main_function():
 	'Common Outdoor Space','Laundry In Unit','Private Outdoor Space','Parking Space','Short Term Allowed','By Owner','Sublet / Lease-Break',\
 	'Storage Facility']
 	processed_data=pd.read_json("../data/processed_train.json")
+	processed_test=pd.read_json('../data/processed_test.json')
 	img=pd.read_csv("../data/image_stats-fixed.csv",index_col=0)
 	processed_data=processed_data.merge(img,how="left",on="listing_id")
+	processed_test=processed_test.merge(img,how="left",on="listing_id")
 	processed_data=processed_data.fillna(0)
-	print "data processed"
-
-	train_data=processed_data.sample(n=processed_data.shape[0]*8/10)
-	test_data=processed_data.drop(train_data.index)
+	processed_test=processed_test.fillna(0)
+	train_data=processed_data
+	test_data=processed_test
 
 	train=train_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
-	ans=[['Features','Train','Test']]
 	
 	y_train=train.loc[:,'interest_level']
 	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
-	y_test=test.loc[:,'interest_level']
-	x_test=test.drop('interest_level',axis=1).loc[:,importance[:16]]
+	
+	x_test=test.loc[:,importance[:16]]
 
 	
 	print "-"*150+"\ndata created"
 
 	res=addnew(x_train,y_train)
-	print res
+	res.to_csv("voteResult.csv")
 
 	
 
-def addnew(x_train,y_train):
-	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=200)]
-	score=[]
+def addnew(x_train,y_train,x_test):
+	clf = [LogisticRegression(C=100,n_jobs=12),RandomForestClassifier(n_estimators=200,n_jobs=12),GaussianNB(),DecisionTreeClassifier(max_depth=6),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=6),AdaBoostClassifier(n_estimators=200)]
 	print "-"*50+"\nmodel created"
-	for i in range(6):
-		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4])]
-		estimator.append(('new',clf[i]))
-		print "-"*150+"\nestimator created"
+	estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4])]
+	print "-"*150+"\nestimator created"
 		# if i==0:
 		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__C': [1, 100]}
 		# elif i==1:
 		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__n_estimators': [20, 200]}
-		print "-"*150+"\nparams created"
-		eclf = VotingClassifier(estimators=estimator, voting='soft')
-		score.append(np.mean(cross_val_score(eclf, x_train, y_train,n_jobs=2)))
-		print "-"*150+"\nscore created"
-		print "Score for model ", i, "is ", score[-1]
+	print "-"*150+"\nparams created"
+	eclf = VotingClassifier(estimators=estimator, voting='soft')
+	eclf.fit(x_train,y_train)
+	pred=eclf.predict(x_test)
+	print "-"*150+"\nscore created"
+	print "Score for model is "
 
-	return score
+	return pred
 
 main_function()
