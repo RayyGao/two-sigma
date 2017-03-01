@@ -29,7 +29,7 @@ def XG(x_train,y_train,x_test,y_test):
 	param['nthread'] = 4
 	param['num_class'] = 3
 	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-	num_round = 10
+	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 	return bst.predict(xg_test)

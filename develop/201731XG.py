@@ -4,6 +4,94 @@ from scipy import stats
 import random
 import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
+from xgboost.sklearn import XGBClassifierimport numpy as np
+import pandas as pd
+from scipy import stats
+import random
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn import model_selection
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+import xgboost as xgb
+from sklearn import model_selection
+from sklearn.ensemble import RandomForestClassifier
+
+def GB(x_train,y_train,x_test,depth):
+	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=depth)
+	GB.fit(x_train,y_train)
+	return GB.predict(x_test)
+
+def XG(x_train,y_train,x_test,y_test,depth):
+	xg_train=xgb.DMatrix(x_train,label=y_train)
+	xg_test=xgb.DMatrix(x_test,label=y_test)
+	param={}
+	param['objective'] = 'multi:softmax'
+# scale weight of positive examples
+	param['eta'] = 0.1
+	param['max_depth'] = depth
+	param['silent'] = 1
+	param['nthread'] = 4
+	param['num_class'] = 3
+	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
+	num_round = 20
+	print "train xgboosting next"
+	bst = xgb.train(param, xg_train, num_round, watchlist )
+	return bst.predict(xg_test)
+
+
+
+def stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy,d):
+	#1st: partition the train set into 5 test sets
+	x_train_cpy=x_train.copy()
+	k=x_train.shape[0]/2
+	x_sp=[[],[]]
+	sample=random.sample(x_train.index,k)
+	x_sp[i]=x_train.ix[sample]
+	x_train=x_train.drop(sample)
+	x_sp[2]=x_train
+
+	#2nd: create train_meta and test_meta
+	train_meta=pd.DataFrame()
+	#3rd: for each fold in 1st, use other 5 folds as training set to predict the result for that fold.
+	#and save them in train_meta
+	x_train=x_train_cpy
+	for i in range(2):
+	    x_sub_test=x_sp[i]
+	    x_sub_train=x_train.drop(x_sub_test.index)
+	    y_sub_test=y_train[x_sub_test.index]
+	    y_sub_train=y_train[x_sub_train.index]
+	    M1=pd.Series(GB(x_sub_train,y_sub_train,x_sub_test,d),index=x_sub_test.index)
+	    M2=pd.Series(XG(x_sub_train,y_sub_train,x_sub_test,y_sub_test,d),index=x_sub_test.index)
+	    app={'M1':M1,'M2':M2}
+	    train_meta=train_meta.append(pd.DataFrame(app))
+	#4th:Fit each base model to the full training dataset 
+	#and make predictions on the test dataset. Store these predictions inside test_meta
+	M1=pd.Series(GB(x_train,y_train,x_test),index=x_test.index)
+	M2=pd.Series(XG(x_train,y_train,x_test,y_test),index=x_test.index)
+	
+	test['M1']=M1
+	test['M2']=M2
+	
+
+	#5th: Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
+	#Optionally, include other features from the original training dataset or engineered features
+	##==> transfer to dummy variables
+	train_meta_dummy=pd.get_dummies(train_meta)
+	test_meta=test.loc[:,['M1','M2']]
+	test_meta_dummy=pd.get_dummies(test_meta)
+
+	#random forest with meta only
+	clf=RandomForestClassifier(n_estimators=200)
+	clf.fit(train_meta_dummy,y_train_copy)
+	trainacc1=accuracy_score(clf.predict(train_meta_dummy),y_train_copy)
+	testacc1= accuracy_score(clf.predict(test_meta_dummy),y_test_copy)
+
+	out=[trainacc1,testacc1]
+	return out
+
+
 def main_function():
 	importance=['price','avg_imagesize_x','word_count','avg_luminance_x','avg_brightness_x','manager count','description_sentiment','img_quantity_x','unique_count','bedrooms','bathrooms','No Fee',\
 	'dist_count','Doorman','Laundry In Building','Elevator','Fitness Center','Reduced Fee','Exclusive','Cats Allowed','Dogs Allowed','Furnished',\
@@ -29,48 +117,14 @@ def main_function():
 	y_test1=map(lambda x: diction[x],y_test)
 	y_train=pd.Series(y_train1,index=y_train.index)
 	y_test=pd.Series(y_test1,index=y_test.index)
-# this is for max_depth and min_child_weight
-	param_test1 = {
-	 'max_depth':range(3,10,10),
-	 'min_child_weight':range(1,6,10)
-	}
-	gsearch1 = GridSearchCV(estimator = xgb.XGBClassifier( learning_rate =0.1, n_estimators=200, max_depth=5,
-	min_child_weight=1, gamma=0, subsample=0.8, colsample_bytree=0.8,
-	objective= 'multi:softmax', nthread=3, scale_pos_weight=1, seed=27), 
-	param_grid = param_test1, scoring='roc_auc',n_jobs=12,iid=False, cv=5,num_class=3)
-	gsearch1.fit(x_train,y_train)
-	gsearch1.grid_scores_, gsearch1.best_params_, gsearch1.best_score_
-# this part is for gamma
-	# param_test3 = {
-	#  'gamma':[i/10.0 for i in range(0,5,10)]
-	# }
-	# gsearch3 = GridSearchCV(estimator = XGBClassifier( learning_rate =0.1, n_estimators=140, max_depth=4,
-	# min_child_weight=6, gamma=0, subsample=0.8, colsample_bytree=0.8,
-	# objective= 'multi:softmax', nthread=4, scale_pos_weight=1,seed=27), 
-	# param_grid = param_test3, scoring='roc_auc',n_jobs=4,iid=False, cv=5,num_class=3)
-	# gsearch3.fit(train[predictors],train[target])
-	# gsearch3.grid_scores_, gsearch3.best_params_, gsearch3.best_score_
-
-# this part is for subsample and colsample
-	# param_test4 = {
- 	#'subsample':[i/10.0 for i in range(6,10,10)],
-	# 'colsample_bytree':[i/10.0 for i in range(6,10,10)]
-	# }
-	# gsearch4 = GridSearchCV(estimator = XGBClassifier( learning_rate =0.1, n_estimators=177, max_depth=4,
-	# min_child_weight=6, gamma=0, subsample=0.8, colsample_bytree=0.8,
-	# objective= 'multi:softmax', nthread=4, scale_pos_weight=1,seed=27), 
-	# param_grid = param_test4, scoring='roc_auc',n_jobs=4,iid=False, cv=5,num_class=3)	
-	# gsearch4.fit(train[predictors],train[target])
-	# gsearch4.grid_scores_, gsearch4.best_params_, gsearch4.best_score_
-
-# this part is for alpha
-	# param_test6 = {
-	#  'reg_alpha':[1e-5, 1e-2, 0.1, 1, 100]
-	# }
-	# gsearch6 = GridSearchCV(estimator = XGBClassifier( learning_rate =0.1, n_estimators=177, max_depth=4,
-	# min_child_weight=6, gamma=0.1, subsample=0.8, colsample_bytree=0.8,
-	# objective= 'multi:softmax', nthread=4, scale_pos_weight=1,seed=27), 
-	# param_grid = param_test6, scoring='roc_auc',n_jobs=4,iid=False, cv=5,num_class=3)
-	# gsearch6.fit(train[predictors],train[target])
-	# gsearch6.grid_scores_, gsearch6.best_params_, gsearch6.best_score_
+	depthR=range(3,10)
+	for d in depthR:
+		res=stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy,d)
+		print "This model is for 16 features and depth is ", d
+		print "train accuracy on meta data is ",res[0]
+		print "test accuracy on meta data is ", res[1]
+	
+#return and print 
 main_function()
+
+
