@@ -3,34 +3,51 @@ import pandas as pd
 from scipy import stats
 import random
 import xgboost as xgb
-from sklearn.model_selection import GridSearchCV
-from xgboost.sklearn import XGBClassifierimport numpy as np
+import numpy as np
 import pandas as pd
 from scipy import stats
-import random
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn import model_selection
-from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
-import xgboost as xgb
 from sklearn import model_selection
 from sklearn.ensemble import RandomForestClassifier
-
-def GB(x_train,y_train,x_test,depth):
-	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=depth)
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+def GB(x_train,y_train,x_test):
+	GB=GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=6)
 	GB.fit(x_train,y_train)
-	return GB.predict(x_test)
+	return GB.predict_proba(x_test)
 
-def XG(x_train,y_train,x_test,y_test,depth):
+def KNN(x_train,y_train,x_test):
+	KNN=KNeighborsClassifier(k=5,n_jobs=12)
+	KNN.fit(x_train,y_train)
+	return KNN.predict_proba(x_test)
+
+def lr(x_train,y_train,x_test):
+	lr=LogisticRegression(solver='lbfgs',multi_class='multinomial',n_jobs=12)
+	lr.fit(x_train,y_train)
+	return lr.predict_proba(x_test)
+
+def rf(x_train,y_train,x_test):
+	rf=RandomForestClassifier(n_estimators=200,n_jobs=12)
+	rf.fit(x_train,y_train)
+	return rf.predict_proba(x_test)
+def ada(x_train,y_train,x_test):
+	ada=AdaBoostClassifier(n_estimators=50,learning_rate=0.1)
+	ada.fit(x_train,y_train)
+	return ada.predict_proba(x_test)
+
+
+def XG(x_train,y_train,x_test,y_test):
 	xg_train=xgb.DMatrix(x_train,label=y_train)
 	xg_test=xgb.DMatrix(x_test,label=y_test)
 	param={}
 	param['objective'] = 'multi:softmax'
 # scale weight of positive examples
 	param['eta'] = 0.1
-	param['max_depth'] = depth
+	param['max_depth'] = 6
 	param['silent'] = 1
 	param['nthread'] = 4
 	param['num_class'] = 3
@@ -38,58 +55,71 @@ def XG(x_train,y_train,x_test,y_test,depth):
 	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
-	return bst.predict(xg_test)
+	return [bst.predict(xg_train),bst.predict(xg_test)]
 
 
 
-def stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy,d):
+def stackmodel(x_train,y_train,x_test,y_test):
 	#1st: partition the train set into 5 test sets
 	x_train_cpy=x_train.copy()
-	k=x_train.shape[0]/2
-	x_sp=[[],[]]
+	k=x_train.shape[0]/5
+	x_sp=[[],[],[],[],[]]
 	sample=random.sample(x_train.index,k)
-	x_sp[i]=x_train.ix[sample]
-	x_train=x_train.drop(sample)
-	x_sp[2]=x_train
+	for i in range(4):
+		x_sp[i]=x_train.ix[sample]
+		x_train=x_train.drop(sample)
+	x_sp[4]=x_train
 
 	#2nd: create train_meta and test_meta
 	train_meta=pd.DataFrame()
 	#3rd: for each fold in 1st, use other 5 folds as training set to predict the result for that fold.
 	#and save them in train_meta
-	x_train=x_train_cpy
-	for i in range(2):
+	
+	for i in range(5):
+		print 'this is the ',i,'th round of stacking'
 	    x_sub_test=x_sp[i]
 	    x_sub_train=x_train.drop(x_sub_test.index)
 	    y_sub_test=y_train[x_sub_test.index]
 	    y_sub_train=y_train[x_sub_train.index]
-	    M1=pd.Series(GB(x_sub_train,y_sub_train,x_sub_test,d),index=x_sub_test.index)
-	    M2=pd.Series(XG(x_sub_train,y_sub_train,x_sub_test,y_sub_test,d),index=x_sub_test.index)
-	    app={'M1':M1,'M2':M2}
-	    train_meta=train_meta.append(pd.DataFrame(app))
+	    M1=pd.DataFrame(GB(x_sub_train,y_sub_train,x_sub_test),columns=['GB_low','GB_medium','GB_high'],index=x_sub_test.index)
+	    print "Gradient Boosting"
+	    M2=pd.DataFrame(lr(x_sub_train,y_sub_train,x_sub_test),columns=['lr_low','lr_medium','lr_high'],index=x_sub_test.index)
+	    print "Logistic"
+	    M3=pd.DataFrame(KNN(x_sub_train,y_sub_train,x_sub_test),columns=['knn_low','knn_medium','knn_high'],index=x_sub_test.index)
+	    print "KNN"
+	    M4=pd.DataFrame(rf(x_sub_train,y_sub_train,x_sub_test),columns=['rf_low','rf_medium','rf_high'],index=x_sub_test.index)
+	    print "Random Forest"
+	    M5=pd.DataFrame(ada(x_sub_train,y_sub_train,x_sub_test),columns=['ada_low','ada_medium','ada_high'],index=x_sub_test.index)
+	    print "Adaboost"
+	    train_meta=train_meta.append(pd.concat([M1,M2,M3,M4,M5],axis=1))
+	   
 	#4th:Fit each base model to the full training dataset 
 	#and make predictions on the test dataset. Store these predictions inside test_meta
-	M1=pd.Series(GB(x_train,y_train,x_test),index=x_test.index)
-	M2=pd.Series(XG(x_train,y_train,x_test,y_test),index=x_test.index)
-	
-	test['M1']=M1
-	test['M2']=M2
+	print "For the all train and test set"
+	x_train=x_train_cpy
+	M1=pd.DataFrame(GB(x_train,y_train,x_test),columns=['GB_low','GB_medium','GB_high'],index=x_test.index)
+	print "GB"
+	M2=pd.DataFrame(lr(x_train,y_train,x_test),columns=['lr_low','lr_medium','lr_high'],index=x_test.index)
+	print "LR"
+	M3=pd.DataFrame(KNN(x_train,y_train,x_test),columns=['knn_low','knn_medium','knn_high'],index=x_test.index)
+	print "KNN"
+	M4=pd.DataFrame(rf(x_train,y_train,x_test),columns=['rf_low','rf_medium','rf_high'],index=x_test.index)
+	print "RF"
+	M5=pd.DataFrame(ada(x_train,y_train,x_test),columns=['ada_low','ada_medium','ada_high'],index=x_test.index)
+	print "ADA"
+	test_meta=pd.concat([M1,M2,M3,M4,M5],axis=1)
 	
 
 	#5th: Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
 	#Optionally, include other features from the original training dataset or engineered features
 	##==> transfer to dummy variables
-	train_meta_dummy=pd.get_dummies(train_meta)
-	test_meta=test.loc[:,['M1','M2']]
-	test_meta_dummy=pd.get_dummies(test_meta)
-
+	
+    pred=XG(train_meta,y_train,test_meta,y_test)
 	#random forest with meta only
-	clf=RandomForestClassifier(n_estimators=200)
-	clf.fit(train_meta_dummy,y_train_copy)
-	trainacc1=accuracy_score(clf.predict(train_meta_dummy),y_train_copy)
-	testacc1= accuracy_score(clf.predict(test_meta_dummy),y_test_copy)
+	print "accuracy of train is ", accuracy_score(pred[0],y_train)
+	print "accuracy of test is ", accuracy_score(pred[1],y_test)
 
-	out=[trainacc1,testacc1]
-	return out
+	
 
 
 def main_function():
@@ -117,12 +147,8 @@ def main_function():
 	y_test1=map(lambda x: diction[x],y_test)
 	y_train=pd.Series(y_train1,index=y_train.index)
 	y_test=pd.Series(y_test1,index=y_test.index)
-	depthR=range(3,10)
-	for d in depthR:
-		res=stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy,d)
-		print "This model is for 16 features and depth is ", d
-		print "train accuracy on meta data is ",res[0]
-		print "test accuracy on meta data is ", res[1]
+
+	res=stackmodel(x_train,y_train,x_test,y_test)
 	
 #return and print 
 main_function()
