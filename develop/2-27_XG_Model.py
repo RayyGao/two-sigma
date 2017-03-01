@@ -34,23 +34,24 @@ def XG(x_train,y_train,x_test,y_test):
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 	return bst.predict(xg_test)
 
+
+
 def stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy):
 	#1st: partition the train set into 5 test sets
 	x_train_cpy=x_train.copy()
-	k=x_train.shape[0]/5
-	x_sp=[[],[],[],[],[]]
-	for i in range(4):
-	    sample=random.sample(x_train.index,k)
-	    x_sp[i]=x_train.ix[sample]
-	    x_train=x_train.drop(sample)
-	x_sp[4]=x_train
+	k=x_train.shape[0]/2
+	x_sp=[[],[]]
+	sample=random.sample(x_train.index,k)
+	x_sp[i]=x_train.ix[sample]
+	x_train=x_train.drop(sample)
+	x_sp[2]=x_train
 
 	#2nd: create train_meta and test_meta
 	train_meta=pd.DataFrame()
 	#3rd: for each fold in 1st, use other 5 folds as training set to predict the result for that fold.
 	#and save them in train_meta
 	x_train=x_train_cpy
-	for i in range(5):
+	for i in range(2):
 	    x_sub_test=x_sp[i]
 	    x_sub_train=x_train.drop(x_sub_test.index)
 	    y_sub_test=y_train[x_sub_test.index]
@@ -81,15 +82,7 @@ def stackmodel(x_train,y_train,x_test,y_test,test,y_train_copy,y_test_copy):
 	trainacc1=accuracy_score(clf.predict(train_meta_dummy),y_train_copy)
 	testacc1= accuracy_score(clf.predict(test_meta_dummy),y_test_copy)
 
-	x_last_train=pd.concat([train_meta_dummy,x_train],axis=1)
-	x_last_test=pd.concat([test_meta_dummy,x_test],axis=1)
-
-	#random forest with combined
-	clf.fit(x_last_train,y_train_copy)
-	trainacc2=accuracy_score(clf.predict(x_last_train),y_train_copy)
-	testacc2= accuracy_score(clf.predict(x_last_test),y_test_copy)
-
-	out=[trainacc1,testacc1,trainacc2,testacc2]
+	out=[trainacc1,testacc1]
 	return out
 
 
@@ -108,9 +101,9 @@ def main_function():
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	ans=[['Features','Train on meta','Test on meta','Train with all','Test with all']]
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1)
+	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
 	y_test=test.loc[:,'interest_level']
-	x_test=test.drop('interest_level',axis=1)
+	x_test=test.drop('interest_level',axis=1).loc[:,importance[:16]]
 	y_train_copy=y_train.copy()
 	y_test_copy=y_test.copy()
 	diction={'low':0,'medium':1,'high':2}
@@ -122,8 +115,6 @@ def main_function():
 	print "This model is for all features"
 	print "train accuracy on meta data is ",res[0]
 	print "test accuracy on meta data is ", res[1]
-	print "train accuracy on combined data is ",res[2]
-	print "test accuracy on combined data is ", res[3]
 	
 #return and print 
 main_function()
