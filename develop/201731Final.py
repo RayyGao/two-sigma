@@ -52,7 +52,7 @@ def XG(x_train,y_train,x_test):
 	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
-	res= {'train':pd.Series(bst.predict(xg_train),index=x_train.index),'test':pd.Series(bst.predict(xg_test),index=x_test.index)}
+	res= {'train':bst.predict(xg_train),'test':bst.predict(xg_test)}
 	return res
 
 
