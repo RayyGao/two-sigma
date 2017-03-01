@@ -41,7 +41,8 @@ def main_function():
 	
 	print "-"*150+"\ndata created"
 
-	res=addnew(x_train,y_train)
+	res=addnew(x_train,y_train,x_test)
+	res=pd.Series(res,index=x_test.index)
 	res.to_csv("voteResult.csv")
 
 	
@@ -51,10 +52,6 @@ def addnew(x_train,y_train,x_test):
 	print "-"*50+"\nmodel created"
 	estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4])]
 	print "-"*150+"\nestimator created"
-		# if i==0:
-		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__C': [1, 100]}
-		# elif i==1:
-		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__n_estimators': [20, 200]}
 	print "-"*150+"\nparams created"
 	eclf = VotingClassifier(estimators=estimator, voting='soft')
 	eclf.fit(x_train,y_train)

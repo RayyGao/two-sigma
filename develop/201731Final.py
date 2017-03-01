@@ -23,7 +23,7 @@ def KNN(x_train,y_train,x_test):
 	return KNN.predict_proba(x_test)
 
 def lr(x_train,y_train,x_test):
-	lr=LogisticRegression(solver='lbfgs',multi_class='multinomial',n_jobs=12)
+	lr=LogisticRegression(C=1e4,solver='lbfgs',multi_class='multinomial',n_jobs=12)
 	lr.fit(x_train,y_train)
 	return lr.predict_proba(x_test)
 
@@ -73,8 +73,9 @@ def stackmodel(x_train,y_train,x_test):
 	train_meta=pd.DataFrame()
 	#3rd: for each fold in 1st, use other 5 folds as training set to predict the result for that fold.
 	#and save them in train_meta
-	x_train=x_train_cpy
+	
 	for i in range(5):
+		x_train=x_train_cpy
 		print 'this is the ',i,'th round of stacking'
 		x_sub_test=x_sp[i]
 		x_sub_train=x_train.drop(x_sub_test.index)
@@ -137,15 +138,15 @@ def main_function():
 	train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
-	x_test=test.loc[:,importance[:16]]
+	x_train=train.drop('interest_level',axis=1)
+	x_test=test
 	y_train_copy=y_train.copy()
 	diction={'low':0,'medium':1,'high':2}
 	y_train1=map(lambda x: diction[x],y_train)
 	y_train=pd.Series(y_train1,index=y_train.index)
-	res=stackmodel(x_train,y_train,x_test)
-	res=pd.Series(res,index=x_test.index)
-	res.to_csv("testResult.csv")
+	pred=stackmodel(x_train,y_train,x_test)
+	pred=pd.Series(pred,index=x_test.index)
+	pred.to_csv("testResult.csv")
 #return and print 
 main_function()
 
