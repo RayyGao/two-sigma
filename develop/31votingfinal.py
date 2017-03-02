@@ -34,9 +34,9 @@ def main_function():
 	test=test_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
+	x_train=train.drop('interest_level',axis=1)
 	
-	x_test=test.loc[:,importance[:16]]
+	x_test=test
 
 	
 	print "-"*150+"\ndata created"
