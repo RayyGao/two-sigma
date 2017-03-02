@@ -41,7 +41,7 @@ def XG(x_train,y_train,x_test):
 	xg_train=xgb.DMatrix(x_train,label=y_train)
 	xg_test=xgb.DMatrix(x_test)
 	param={}
-	param['objective'] = 'multi:softmax'
+	param['objective'] = 'multi:softprob'
 # scale weight of positive examples
 	param['eta'] = 0.1
 	param['max_depth'] = 6
@@ -52,7 +52,7 @@ def XG(x_train,y_train,x_test):
 	num_round = 20
 	print "train xgboosting next"
 	bst = xgb.train(param, xg_train, num_round, watchlist )
-	res= {'train':bst.predict(xg_train),'test':bst.predict_proba(xg_test)}
+	res= {'train':bst.predict(xg_train),'test':bst.predict(xg_test)}
 	return res
 
 
