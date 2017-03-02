@@ -45,7 +45,17 @@ y_train=pd.Series(y_train1,index=y_train.index)
 
 train_X = x_train.as_matrix()
 test_X = x_test.as_matrix()
+print "before scalar train size",train_X.shape
+print "before scalar test size",test_X.shape
 
+traintest = np.vstack((train_X, test_X))
+
+traintest = preprocessing.StandardScaler().fit_transform(traintest)
+
+train_X = traintest[range(train_X.shape[0])]
+test_X = traintest[range(train_X.shape[0], traintest.shape[0])]
+print "after scalar train size",train_X.shape
+print "after scalar test size", test_X.shape
 ## neural net
 def nn_model():
 	model = Sequential()

@@ -47,11 +47,12 @@ def main_function():
 	
 
 def addnew(x_train,y_train):
-	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=200)]
+	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=200),RandomForestClassifier(n_estimators=200,criterion='entropy')]
 	score=[]
 	print "-"*50+"\nmodel created"
 	for i in range(6):
-		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4])]
+		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4]),('rf4',clf[1]),
+		('rf5',clf[1])]
 		estimator.append(('new',clf[i]))
 		print "-"*150+"\nestimator created"
 		# if i==0:
@@ -60,7 +61,7 @@ def addnew(x_train,y_train):
 		# 	params = {'lr__C': [1, 100], 'rf__n_estimators': [20, 200],'new__n_estimators': [20, 200]}
 		print "-"*150+"\nparams created"
 		eclf = VotingClassifier(estimators=estimator, voting='soft')
-		score.append(np.mean(cross_val_score(eclf, x_train, y_train,n_jobs=2)))
+		score.append(np.mean(cross_val_score(eclf, x_train, y_train,n_jobs=4)))
 		print "-"*150+"\nscore created"
 		print "Score for model ", i, "is ", score[-1]
 
