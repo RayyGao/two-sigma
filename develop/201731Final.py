@@ -145,7 +145,7 @@ def main_function():
 	y_train1=map(lambda x: diction[x],y_train)
 	y_train=pd.Series(y_train1,index=y_train.index)
 	pred=stackmodel(x_train,y_train,x_test)
-	ans=pd.concat([processed_test,pred])
+	ans=pd.concat([processed_test,pred],axis=1)
 	ans=ans.loc[:,['listing_id','low','medium','high']]
 	ans.to_csv("testResult.csv")
 #return and print 

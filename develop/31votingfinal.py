@@ -42,7 +42,8 @@ def main_function():
 	print "-"*150+"\ndata created"
 
 	res=addnew(x_train,y_train,x_test)
-	ans=pd.concat([processed_test,res])
+	res=pd.DataFrame(res,columns=['low','medium','high'],index=x_test.index)
+	ans=pd.concat([processed_test,res],axis=1)
 	ans=ans.loc[:,['listing_id','low','medium','high']]
 	
 	ans.to_csv("voteResult.csv")
