@@ -60,7 +60,7 @@ print "after scalar test size", test_X.shape
 def nn_model():
 	model = Sequential()
     
-	model.add(Dense(500, input_dim = train_X.shape[1], init = 'he_normal', activation='sigmoid'))
+	model.add(Dense(300, input_dim = train_X.shape[1], init = 'he_normal', activation='sigmoid'))
 	model.add(BatchNormalization())
 	model.add(Dropout(0.35))
 	model.add(PReLU())
@@ -81,7 +81,7 @@ print "this is train Y",train_y
 print '-'*50
 do_all = True
 ## cv-folds
-nfolds = 10
+nfolds = 5
 if do_all:
 	if nfolds>1:
 		folds = KFold(int(len(train_y)), n_folds = nfolds, shuffle = True, random_state = 111)
@@ -98,7 +98,7 @@ print "KFold passed"
 print "-"*100
 
 ## train models
-nbags = 5
+nbags = 1
 
 from time import time
 import datetime
@@ -119,29 +119,28 @@ if nfolds>1:
 		xte = train_X[inTe]
 		yte = train_y[inTe]
 		pred = np.zeros((xte.shape[0], 3))
-		for j in range(nbags):
-			print(j)
-			print "Model created"
-			model = nn_model()
-			early_stop = EarlyStopping(monitor='val_loss', patience=75, verbose=0)
-			checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=True)
-			print "model fit"
-			model.fit(xtr, ytr, nb_epoch = 1200, batch_size=1000, verbose = 0, validation_data=[xte, yte])
+		print(0)
+		print "Model created"
+		model = nn_model()
+		early_stop = EarlyStopping(monitor='val_loss', patience=75, verbose=0)
+		checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=True)
+		print "model fit"
+		model.fit(xtr, ytr, nb_epoch = 1200, batch_size=1000, verbose = 0, validation_data=[xte, yte])
 
-			pred += model.predict_proba(x=xte, verbose=0)
+		pred += model.predict_proba(x=xte, verbose=0)
 	        
-			pred_test += model.predict_proba(x=testset, verbose=0)
+		pred_test += model.predict_proba(x=testset, verbose=0)
 	        
-			print(log_loss(yte,pred/(j+1)))
-			if  not do_all:
-				print(log_loss(ytestset,pred_test/(j+1+count*nbags)))
-			print(str(datetime.timedelta(seconds=time()-begintime)))
-		pred /= nbags
-		pred_oob[inTe] = pred
-		score = log_loss(yte,pred)
-		print('Fold ', count, '- logloss:', score)
-		if not do_all:
-			print(log_loss(ytestset, pred_test/(nbags * count)))
+		print(log_loss(yte,pred/(1)))
+		if  not do_all:
+			print(log_loss(ytestset,pred_test/(1+count*nbags)))
+		print(str(datetime.timedelta(seconds=time()-begintime)))
+	pred /= nbags
+	pred_oob[inTe] = pred
+	score = log_loss(yte,pred)
+	print('Fold ', count, '- logloss:', score)
+	if not do_all:
+		print(log_loss(ytestset, pred_test/(nbags * count)))
 else:
 	for j in range(nbags):
 		print(j)
@@ -162,12 +161,12 @@ if do_all:
 	if nfolds>1:
 		out_df = pd.DataFrame(pred_oob)
 		out_df.columns = ["low", "medium", "high"]
-		out_df["listing_id"] = train_df.listing_id.values
+		out_df["listing_id"] = train_data.listing_id.values
 		out_df.to_csv("keras_starter_train.csv", index=False)
 
 	## test predictions
 	pred_test /= (nfolds*nbags)
 	out_df = pd.DataFrame(pred_test)
 	out_df.columns = ["low", "medium", "high"]
-	out_df["listing_id"] = test_df.listing_id.values
+	out_df["listing_id"] = train_data.listing_id.values
 	out_df.to_csv("keras__test_full.csv", index=False)
