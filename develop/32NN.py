@@ -20,13 +20,11 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.utils.np_utils import to_categorical
 
 
-importance=['price','avg_imagesize_x','word_count','avg_luminance_x','avg_brightness_x','manager count','description_sentiment','img_quantity_x','unique_count','bedrooms','bathrooms','No Fee',\
-'dist_count','Doorman','Laundry In Building','Elevator','Fitness Center','Reduced Fee','Exclusive','Cats Allowed','Dogs Allowed','Furnished',\
-'Common Outdoor Space','Laundry In Unit','Private Outdoor Space','Parking Space','Short Term Allowed','By Owner','Sublet / Lease-Break',\
-'Storage Facility']
+importance=['avg_imagesize_y','price','word_count','manager count','description_sentiment','avg_B','avg_imgheight','avg_G','avg_R','unique_count','bedrooms',
+'dist_count','No Fee','bathrooms','avg_metadata','Doorman','Elevator']
 processed_data=pd.read_json("../data/processed_train.json")
 processed_test=pd.read_json('../data/processed_test.json')
-img=pd.read_csv("../data/image_stats-fixed.csv",index_col=0)
+img=pd.read_csv("../data/full-image-stats.csv",index_col=0)
 processed_data=processed_data.merge(img,how="left",on="listing_id")
 processed_test=processed_test.merge(img,how="left",on="listing_id")
 processed_data=processed_data.fillna(0)
@@ -36,8 +34,8 @@ test_data=processed_test
 train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
 y_train=train.loc[:,'interest_level']
-x_train=train.drop('interest_level',axis=1)
-x_test=test
+x_train=train.drop('interest_level',axis=1).loc[:,importance]
+x_test=test.loc[:,importance]
 y_train_copy=y_train.copy()
 diction={'low':0,'medium':1,'high':2}
 y_train1=map(lambda x: diction[x],y_train)
@@ -81,7 +79,7 @@ print "this is train Y",train_y
 print '-'*50
 do_all = True
 ## cv-folds
-nfolds = 5
+nfolds = 10
 if do_all:
 	if nfolds>1:
 		folds = KFold(int(len(train_y)), n_folds = nfolds, shuffle = True, random_state = 111)
@@ -98,7 +96,7 @@ print "KFold passed"
 print "-"*100
 
 ## train models
-nbags = 3
+nbags = 1
 
 from time import time
 import datetime
@@ -131,7 +129,7 @@ if nfolds>1:
 	        
 		pred_test += model.predict_proba(x=testset, verbose=0)
 	        
-		print(log_loss(yte,pred/(3)))
+		print(log_loss(yte,pred/(1)))
 		if  not do_all:
 			print(log_loss(ytestset,pred_test/(1+count*nbags)))
 		print(str(datetime.timedelta(seconds=time()-begintime)))
