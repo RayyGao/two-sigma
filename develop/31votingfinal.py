@@ -22,7 +22,7 @@ def main_function():
 	'Storage Facility']
 	processed_data=pd.read_json("../data/processed_train.json")
 	processed_test=pd.read_json('../data/processed_test.json')
-	img=pd.read_csv("../data/image_stats-fixed.csv",index_col=0)
+	img=pd.read_csv("../data/full-image-stats.csv",index_col=0)
 	processed_data=processed_data.merge(img,how="left",on="listing_id")
 	processed_test=processed_test.merge(img,how="left",on="listing_id")
 	processed_data=processed_data.fillna(0)
@@ -60,7 +60,7 @@ def addnew(x_train,y_train,x_test):
 	eclf.fit(x_train,y_train)
 	pred=eclf.predict_proba(x_test)
 	print "-"*150+"\nscore created"
-	print "Score for model is "
+	
 
 	return pred
 
