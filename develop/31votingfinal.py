@@ -16,7 +16,8 @@ from sklearn.ensemble import AdaBoostClassifier
 ##loading and processing data
 ##logistic regression, random forest classifier, gaussianNB
 def main_function():
-	importance=['avg_imagesize_x','price','word_count','manager count','description_sentiment','avg_B','avg_imgheight','avg_G','avg_R','unique_count','bedrooms','bathrooms']
+	importance=['avg_imagesize_y','price','word_count','manager count','description_sentiment','avg_B','avg_imgheight','avg_G','avg_R','unique_count','bedrooms',
+	'dist_count','No Fee','bathrooms','avg_metadata','Doorman','Elevator']
 	processed_data=pd.read_json("../data/processed_train.json")
 	processed_test=pd.read_json('../data/processed_test.json')
 	img=pd.read_csv("../data/full-image-stats.csv",index_col=0)
