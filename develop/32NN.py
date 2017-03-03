@@ -98,7 +98,7 @@ print "KFold passed"
 print "-"*100
 
 ## train models
-nbags = 1
+nbags = 3
 
 from time import time
 import datetime
@@ -131,7 +131,7 @@ if nfolds>1:
 	        
 		pred_test += model.predict_proba(x=testset, verbose=0)
 	        
-		print(log_loss(yte,pred/(1)))
+		print(log_loss(yte,pred/(3)))
 		if  not do_all:
 			print(log_loss(ytestset,pred_test/(1+count*nbags)))
 		print(str(datetime.timedelta(seconds=time()-begintime)))
@@ -168,5 +168,5 @@ if do_all:
 	pred_test /= (nfolds*nbags)
 	out_df = pd.DataFrame(pred_test)
 	out_df.columns = ["low", "medium", "high"]
-	out_df["listing_id"] = train_data.listing_id.values
+	out_df["listing_id"] = test_data.listing_id.values
 	out_df.to_csv("keras__test_full.csv", index=False)
