@@ -6,9 +6,10 @@ import os
 import numpy as np
 import pandas as pd
 from nltk.tokenize import word_tokenize
+from nltk.probability import FreqDist
 from textblob import TextBlob
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -31,6 +32,7 @@ distinct_features = ["By Owner",
 
 DUMMY_FEATURES = None
 
+
 def _dummy_features(data):
     global DUMMY_FEATURES
 
@@ -39,8 +41,9 @@ def _dummy_features(data):
         return DUMMY_FEATURES.copy()
 
     feat = data.features.apply(
-        lambda x: pd.Series(map(lambda z: 1 if (z in x) else 0, distinct_features) +
-                            [len(np.setdiff1d(x, distinct_features))]))
+        lambda x: pd.Series(
+            map(lambda z: 1 if (z in x) else 0, distinct_features) +
+            [len(np.setdiff1d(x, distinct_features))]))
     feat.columns = distinct_features + ["unique_count"]
 
     # cache dummy_features
@@ -48,8 +51,9 @@ def _dummy_features(data):
 
     return feat
 
+
 def add_dummy_features(data):
-    print ("Adding dummy features...")
+    print "Adding dummy features..."
 
     feat = _dummy_features(data)
 
@@ -57,6 +61,7 @@ def add_dummy_features(data):
     data = data.join(feat)
 
     return data
+
 
 def add_feature_counts(data):
     print "Add apartment feature counts"
@@ -89,12 +94,22 @@ def add_description_text_analysis(data):
     print "Adding description text analysis..."
 
     d = data.description
+
     d_words = d.apply(word_tokenize)
     d_words_count = pd.Series(d_words.apply(len))
     d_words_count.reset_index(d.index)
     d_words_count.rename("word_count", inplace=True)
 
+    content = " ".join(d)
+    distr = FreqDist(word_tokenize(content))
+    distr_len = float(len(distr.values()))
+    word_freqs = d_words.apply(lambda x: [distr[z] / distr_len for z in x])
+
+    data['description_diversity'] = word_freqs.apply(
+        np.mean)  # this introduces nans
+
     return data.join(d_words_count)
+
 
 def add_description_sentiment_analysis(data):
     print "Adding description sentiment analysis..."
@@ -104,6 +119,7 @@ def add_description_sentiment_analysis(data):
         data.description.apply(lambda x: TextBlob(x).sentiment.polarity).rename(
             "description_sentiment"))
 
+
 def add_image_data(data):
     print "Adding image data..."
 
@@ -111,6 +127,7 @@ def add_image_data(data):
                          index_col=0)
 
     return data.merge(images, how='left', on='listing_id')
+
 
 def process_data(data):
     """
