@@ -86,6 +86,8 @@ def add_manager_id_count(data):
     man_counts = pd.DataFrame(data.manager_id.value_counts())
     man_counts["manager count"] = man_counts["manager_id"]
     man_counts["manager_id"] = man_counts.index
+    man_counts["manager_count_log"] = np.log10(
+        man_counts["manager count"])
 
     return pd.merge(data, man_counts, on="manager_id")
 
