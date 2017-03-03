@@ -16,10 +16,7 @@ from sklearn.ensemble import AdaBoostClassifier
 ##loading and processing data
 ##logistic regression, random forest classifier, gaussianNB
 def main_function():
-	importance=['price','avg_imagesize_x','word_count','avg_luminance_x','avg_brightness_x','manager count','description_sentiment','img_quantity_x','unique_count','bedrooms','bathrooms','No Fee',\
-	'dist_count','Doorman','Laundry In Building','Elevator','Fitness Center','Reduced Fee','Exclusive','Cats Allowed','Dogs Allowed','Furnished',\
-	'Common Outdoor Space','Laundry In Unit','Private Outdoor Space','Parking Space','Short Term Allowed','By Owner','Sublet / Lease-Break',\
-	'Storage Facility']
+	importance=['avg_imagesize_x','price','word_count','manager count','description_sentiment','avg_B','avg_imgheight','avg_G','avg_R','unique_count','bedrooms','bathrooms']
 	processed_data=pd.read_json("../data/processed_train.json")
 	processed_test=pd.read_json('../data/processed_test.json')
 	img=pd.read_csv("../data/full-image-stats.csv",index_col=0)
@@ -29,14 +26,15 @@ def main_function():
 	processed_test=processed_test.fillna(0)
 	train_data=processed_data
 	test_data=processed_test
+	print train_data.columns
 
 	train=train_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	test=test_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
 	
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1)
+	x_train=train.drop('interest_level',axis=1).loc[:,importance]
 	
-	x_test=test
+	x_test=test.loc[:,importance]
 
 	
 	print "-"*150+"\ndata created"
