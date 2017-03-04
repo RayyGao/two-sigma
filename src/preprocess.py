@@ -9,7 +9,7 @@ from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
 from textblob import TextBlob
 
-# PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 distinct_features = ["By Owner",
                      "Exclusive",
@@ -81,13 +81,23 @@ def add_feature_counts(data):
     return data
 
 
+def add_building_id_count(data):
+    print ("Adding building count...")
+    build_counts = pd.DataFrame(data.building_id.value_counts())
+    build_counts["building_counts"] = build_counts["building_id"]
+    build_counts["building_id"] = build_counts.index
+    build_counts["building_count_log"] = np.log2(
+        build_counts["building_counts"])
+
+    return pd.merge(data, build_counts, on="building_id")
+
+
 def add_manager_id_count(data):
     print ("Adding manager count...")
     man_counts = pd.DataFrame(data.manager_id.value_counts())
     man_counts["manager count"] = man_counts["manager_id"]
     man_counts["manager_id"] = man_counts.index
-    man_counts["manager_count_log"] = np.log10(
-        man_counts["manager count"])
+    man_counts["manager_count_log"] = np.log10(man_counts["manager count"])
 
     return pd.merge(data, man_counts, on="manager_id")
 
@@ -140,6 +150,7 @@ def process_data(data):
     data = add_dummy_features(data)
     data = add_feature_counts(data)
     data = add_manager_id_count(data)
+    data = add_building_id_count(data)
     data = add_description_text_analysis(data)
     data = add_description_sentiment_analysis(data)
     data = add_image_data(data)
