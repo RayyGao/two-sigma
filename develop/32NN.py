@@ -24,18 +24,38 @@ importance=['avg_imagesize_y','price','word_count','manager count','description_
 'dist_count','No Fee','bathrooms','avg_metadata','Doorman','Elevator']
 processed_data=pd.read_json("../data/processed_train.json")
 processed_test=pd.read_json('../data/processed_test.json')
-img=pd.read_csv("../data/full-image-stats.csv",index_col=0)
+img=pd.read_csv("../data/image_stats-fixed2.csv",index_col=0)
 processed_data=processed_data.merge(img,how="left",on="listing_id")
 processed_test=processed_test.merge(img,how="left",on="listing_id")
 processed_data=processed_data.fillna(0)
 processed_test=processed_test.fillna(0)
 train_data=processed_data
 test_data=processed_test
-train=train_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
-test=test_data.drop(['building_id','created','description','display_address','longitude','latitude','manager_id','listing_id','photos','street_address','features'],axis=1)
+train_data["created"] = pd.to_datetime(train_data["created"])
+test_data["created"] = pd.to_datetime(test_data["created"])
+train_data["created_year"] = train_data["created"].dt.year
+test_data["created_year"] = test_data["created"].dt.year
+train_data["created_month"] = train_data["created"].dt.month
+test_data["created_month"] = test_data["created"].dt.month
+train_data["created_day"] = train_data["created"].dt.day
+test_data["created_day"] = test_data["created"].dt.day
+train_data["created_hour"] = train_data["created"].dt.hour
+test_data["created_hour"] = test_data["created"].dt.hour
+categorical = ["display_address", "manager_id", "building_id", "street_address"]
+for f in categorical:
+	if train_data[f].dtype=='object':
+		#print(f)
+		lbl = preprocessing.LabelEncoder()
+		lbl.fit(list(train_data[f].values) + list(test_data[f].values))
+		train_data[f] = lbl.transform(list(train_data[f].values))
+		test_data[f] = lbl.transform(list(test_data[f].values))
+train=train_data.drop(['description','avg_imagesize_x','avg_brightness_x','img_quantity_x','avg_luminance_x','created','listing_id','photos','features'],axis=1)
+test=test_data.drop(['description','avg_imagesize_x','avg_brightness_x','img_quantity_x','avg_luminance_x','created','listing_id','photos','features'],axis=1)
+
+
 y_train=train.loc[:,'interest_level']
-x_train=train.drop('interest_level',axis=1).loc[:,importance]
-x_test=test.loc[:,importance]
+x_train=train.drop('interest_level',axis=1)
+x_test=test
 y_train_copy=y_train.copy()
 diction={'low':0,'medium':1,'high':2}
 y_train1=map(lambda x: diction[x],y_train)

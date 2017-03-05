@@ -13,32 +13,43 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn import model_selection, preprocessing, ensemble
 ##loading and processing data
 ##logistic regression, random forest classifier, gaussianNB
 def main_function():
-	importance=['price','avg_imagesize_x','word_count','avg_luminance_x','avg_brightness_x','manager count','description_sentiment','img_quantity_x','unique_count','bedrooms','bathrooms','No Fee',\
-	'dist_count','Doorman','Laundry In Building','Elevator','Fitness Center','Reduced Fee','Exclusive','Cats Allowed','Dogs Allowed','Furnished',\
-	'Common Outdoor Space','Laundry In Unit','Private Outdoor Space','Parking Space','Short Term Allowed','By Owner','Sublet / Lease-Break',\
-	'Storage Facility']
 	processed_data=pd.read_json("../data/processed_train.json")
-	img=pd.read_csv("../data/image_stats-fixed.csv",index_col=0)
+	img=pd.read_csv("../data/image_stats-fixed2.csv",index_col=0)
 	processed_data=processed_data.merge(img,how="left",on="listing_id")
 	processed_data=processed_data.fillna(0)
-	print "data processed"
+	train_data=processed_data
+	train_data["created"] = pd.to_datetime(train_data["created"])
+	train_data["created_year"] = train_data["created"].dt.year
+	train_data["created_month"] = train_data["created"].dt.month
+	train_data["created_day"] = train_data["created"].dt.day
+	train_data["created_hour"] = train_data["created"].dt.hour
 
-	train_data=processed_data.sample(n=processed_data.shape[0]*8/10)
-	test_data=processed_data.drop(train_data.index)
+	
+	categorical = ["display_address", "manager_id", "building_id", "street_address"]
+	for f in categorical:
+		if train_data[f].dtype=='object':
+			#print(f)
+			lbl = preprocessing.LabelEncoder()
+			lbl.fit(list(train_data[f].values))
+			train_data[f] = lbl.transform(list(train_data[f].values))
+		
 
-	train=train_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
-	test=test_data.drop(['building_id','created','description','display_address','manager_id','longitude','latitude','listing_id','photos','street_address','features'],axis=1)
+	train=train_data.drop(['description','avg_imagesize_x','avg_brightness_x','img_quantity_x','avg_luminance_x','created','listing_id','photos','features'],axis=1)
+	print train.columns
+
+	print '-'*100
+	print "-"*150+"\ndata created"
+
+	
 	ans=[['Features','Train','Test']]
 	
 	y_train=train.loc[:,'interest_level']
-	x_train=train.drop('interest_level',axis=1).loc[:,importance[:16]]
-	y_test=test.loc[:,'interest_level']
-	x_test=test.drop('interest_level',axis=1).loc[:,importance[:16]]
-
-	
+	x_train=train.drop('interest_level',axis=1)
 	print "-"*150+"\ndata created"
 
 	res=addnew(x_train,y_train)
@@ -47,12 +58,11 @@ def main_function():
 	
 
 def addnew(x_train,y_train):
-	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=200),RandomForestClassifier(n_estimators=200,criterion='entropy')]
+	clf = [LogisticRegression(C=100),RandomForestClassifier(n_estimators=200),GaussianNB(),DecisionTreeClassifier(max_depth=4),GradientBoostingClassifier(n_estimators=200, learning_rate=0.1,max_depth=4),AdaBoostClassifier(n_estimators=200)]
 	score=[]
 	print "-"*50+"\nmodel created"
 	for i in range(6):
-		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('rf2',clf[1]),('rf3',clf[1]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4]),('rf4',clf[1]),
-		('rf5',clf[1])]
+		estimator=[('lr', clf[0]), ('rf', clf[1]), ('gnb', clf[2]),('dt',clf[3]),('gb',clf[4]),('gb2',clf[4]),('gb3',clf[4]),('gb4',clf[4]),('gb5',clf[4]),('gb6',clf[5]),('gb7',clf[4]),('gb8',clf[4]),('gb9',clf[4]),('ada2',clf[5])]
 		estimator.append(('new',clf[i]))
 		print "-"*150+"\nestimator created"
 		# if i==0:
