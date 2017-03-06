@@ -2,6 +2,10 @@
 
 [Two Sigma description](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries).
 
+## Installation
+
+clone repository, cd to project directory, and use `make` command.
+
 ## This Git repository
 
 Ideas are taken [from here](https://svds.com/jupyter-notebook-best-practices-for-data-science/) and below is an abbreviation of some of the
@@ -55,3 +59,9 @@ c.FileContentsManager.post_save_hook = post_save
 
 Seems pretty self-explanatory, but you can look at the blog linked above if
 you want some clarification.
+
+
+## TODO
+
+- Move final products in /develop to /src. 
+
