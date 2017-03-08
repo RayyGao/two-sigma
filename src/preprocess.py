@@ -9,9 +9,13 @@ from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
 from textblob import TextBlob
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if __name__ == "main":
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__)))
+else:
+    PROJECT_ROOT = os.path.realpath("../")
 
-distinct_features = ["By Owner",
+DISTINCT_FEATURES = ["By Owner",
                      "Exclusive",
                      "Sublet / Lease-Break",
                      "No Fee",
@@ -42,9 +46,9 @@ def _dummy_features(data):
 
     feat = data.features.apply(
         lambda x: pd.Series(
-            map(lambda z: 1 if (z in x) else 0, distinct_features) +
-            [len(np.setdiff1d(x, distinct_features))]))
-    feat.columns = distinct_features + ["unique_count"]
+            map(lambda z: 1 if (z in x) else 0, DISTINCT_FEATURES) +
+            [len(np.setdiff1d(x, DISTINCT_FEATURES))]))
+    feat.columns = DISTINCT_FEATURES + ["unique_count"]
 
     # cache dummy_features
     DUMMY_FEATURES = feat.copy()
