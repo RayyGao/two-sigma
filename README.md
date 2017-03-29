@@ -1,5 +1,5 @@
 # two-sigma
-
+This project is about two-sigma competition in Kaggle. 
 [Two Sigma description](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries).
 
 ## Installation
@@ -64,4 +64,9 @@ you want some clarification.
 ## TODO
 
 - Move final products in /develop to /src. 
+
+
+# Authors
+This is a team project which is about Kaggle Two-sigma Competition.
+Team "NULL": Xu Gao, Yaxiong Huang, Scott Edenbaum, Dodge Coates
 
